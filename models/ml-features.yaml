@@ -7,35 +7,36 @@ models:
       entity_key: user
       main_id_type: main_id
       edge_sources:
-        - inputs/stripeCustomers
-        - inputs/stripeCharges
-        - inputs/stripeInvoices
-        - inputs/stripeBalanceHistory
-        - inputs/stripeSubscriptions
-        - inputs/stripeRefunds
+        - input: stripeCustomers
+        - input: stripeCharges
+        - input: stripeInvoices
+        - input: stripeBalanceHistory
+        - input: stripeSubscriptions
+        - input: stripeRefunds
 # Remove the section below, if you don't want to generate a feature table
   - name: stripe_features
     model_type: feature_table_model
     model_spec:
       validity_time: 24h # 1 day
-      id_stitching: models/stripe_id_stitcher
+      id_stitching: 
+        model: stripe_id_stitcher
       features:
-      # User Traits features - Currency
         - tablevar:
             name: customer_currency_ts
-            ref: inputs/stripeCharges
+            ref: 
+              input: stripeCharges
             filter: currency is not null and currency != ''
             value: max(created)
         - tablefeature:
             name: latest_currency
             ref:
-              input: inputs/stripeCharges
+              input: stripeCharges
             filter: created = customer_currency_ts
             value: max(currency)
-      # Sales Features - days since first sale
         - tablevar: 
             name: first_sale_time
-            ref: inputs/stripeCharges
+            ref: 
+              input: stripeCharges
             filter: status = 'succeeded'
             value: min(created)
         - feature:
