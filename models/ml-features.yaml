@@ -1,0 +1,44 @@
+# This is a sample file, for detailed reference see: https://rudderlabs.github.io/pywht/
+models:
+  - name: stripe_id_stitcher
+    model_type: id_stitcher
+    model_spec:
+      validity_time: 24h # 1 day
+      entity_key: user
+      main_id_type: main_id
+      edge_sources:
+        - inputs/stripeCustomers
+        - inputs/stripeCharges
+        - inputs/stripeInvoices
+        - inputs/stripeBalanceHistory
+        - inputs/stripeSubscriptions
+        - inputs/stripeRefunds
+# Remove the section below, if you don't want to generate a feature table
+  - name: stripe_features
+    model_type: feature_table_model
+    model_spec:
+      validity_time: 24h # 1 day
+      id_stitching: models/stripe_id_stitcher
+      features:
+      # User Traits features - Currency
+        - tablevar:
+            name: customer_currency_ts
+            ref: inputs/stripeCharges
+            filter: currency is not null and currency != ''
+            value: max(created)
+        - tablefeature:
+            name: latest_currency
+            ref:
+              input: inputs/stripeCharges
+            filter: created = customer_currency_ts
+            value: max(currency)
+      # Sales Features - days since first sale
+        - tablevar: 
+            name: first_sale_time
+            ref: inputs/stripeCharges
+            filter: status = 'succeeded'
+            value: min(created)
+        - feature:
+            name: days_since_first_sale
+            value: current_date() - TO_DATE(first_sale_time)
+        
