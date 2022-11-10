@@ -24,8 +24,8 @@ inputs:
     ids:
       - sql: "invoices_id"
         type: invoice_id
-      - sql: "subscription"
-        type: subscription_id
+      - sql: "customer"
+        type: customer_id
   - name: stripeBalanceHistory
     table: analytics_db.data_apps_simulated_stripe.stripe_balance_history
     timestamp_col: created
