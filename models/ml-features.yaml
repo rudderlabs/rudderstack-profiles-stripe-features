@@ -20,6 +20,9 @@ models:
       validity_time: 24h # 1 day
       id_stitching: 
         model: stripe_id_stitcher
+      macros:
+        - name: end_time
+          value: "2022.10.13"
       features:
 
 # shipping_address_country 
@@ -78,12 +81,12 @@ models:
             filter: created = payment_method_details_card_network_ts
             value: max(payment_method_details_card_network)
 
-# # is_delinquent          
-#         - feature:
-#             name: is_delinquent
-#             ref: 
-#               input: stripeCustomers
-#             value: delinquent
+# is_delinquent          
+        - tablefeature:
+            name: is_delinquent
+            ref: 
+              input: stripeCustomers
+            value: max(delinquent)
 
 # has_credit_card
         - tablefeature:
@@ -101,7 +104,7 @@ models:
             value: min(created)
         - feature:
             name: days_since_first_sale
-            value: datediff(day, date(first_sale_time), TO_DATE('2022.10.13', 'YYYY.MM.DD'))
+            value: datediff(day, date(first_sale_time), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD'))
 
 # days_since_last_purchase          
         - tablevar: 
@@ -112,7 +115,7 @@ models:
             value: max(created)
         - feature:
             name: days_since_last_purchase
-            value: datediff(day, date(last_purchase_time), TO_DATE('2022.10.13', 'YYYY.MM.DD'))
+            value: datediff(day, date(last_purchase_time), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD'))
         
 # total_sales
         - tablefeature: 
@@ -184,7 +187,7 @@ models:
             name: sales_in_past_365_days
             ref:
               input: stripeBalanceHistory
-            filter: datediff(day, date(created), TO_DATE('2022.10.13', 'YYYY.MM.DD')) <= 365
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
             value: sum(case when type = 'charge' then amount else 0 end)
 
 # Refund in past n days for n = 365
@@ -192,7 +195,7 @@ models:
             name: refund_in_past_365_days
             ref:
               input: stripeBalanceHistory
-            filter: datediff(day, date(created), TO_DATE('2022.10.13', 'YYYY.MM.DD')) <= 365
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
             value: sum(case when type = 'refund' then amount else 0 end)
 
 # Fees in past n days for n = 365
@@ -200,7 +203,7 @@ models:
             name: fees_in_past_365_days
             ref:
               input: stripeBalanceHistory
-            filter: datediff(day, date(created), TO_DATE('2022.10.13', 'YYYY.MM.DD')) <= 365
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
             value: sum(fee)
 
 # Amount spent in past n days for n = 365
@@ -208,7 +211,7 @@ models:
             name: amt_spent_in_past_365_days
             ref:
               input: stripeBalanceHistory
-            filter: datediff(day, date(created), TO_DATE('2022.10.13', 'YYYY.MM.DD')) <= 365
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
             value: sum(amount)
 
 # Average transaction value in past n days for n = 365
@@ -216,7 +219,7 @@ models:
             name: average_transaction_value_in_past_365_days
             ref:
               input: stripeBalanceHistory
-            filter: datediff(day, date(created), TO_DATE('2022.10.13', 'YYYY.MM.DD')) <= 365
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
             value: avg(amount)
 
 # Highest transaction value in past n days for n = 365
@@ -224,7 +227,7 @@ models:
             name: highest_transaction_value_in_past_365_days
             ref:
               input: stripeBalanceHistory
-            filter: datediff(day, date(created), TO_DATE('2022.10.13', 'YYYY.MM.DD')) <= 365
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
             value: max(amount)
 
 # Net transaction amount in past n days for n = 365
@@ -232,7 +235,7 @@ models:
             name: net_transaction_amount_in_past_365_days
             ref:
               input: stripeBalanceHistory
-            filter: datediff(day, date(created), TO_DATE('2022.10.13', 'YYYY.MM.DD')) <= 365
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
             value: sum(net)
 
 # Transactions in past n days for n = 365
@@ -240,7 +243,7 @@ models:
             name: transactions_in_past_365_days
             ref:
               input: stripeBalanceHistory
-            filter: datediff(day, date(created), TO_DATE('2022.10.13', 'YYYY.MM.DD')) <= 365
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
             value: sum(case when type = 'charge' then 1 else 0 end)
 
 # Refund count in past n days for n = 365
@@ -248,5 +251,5 @@ models:
             name: refund_count_in_past_365_days
             ref:
               input: stripeBalanceHistory
-            filter: datediff(day, date(created), TO_DATE('2022.10.13', 'YYYY.MM.DD')) <= 365
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
             value: sum(case when type = 'refund' then 1 else 0 end)
