@@ -20,12 +20,12 @@ inputs:
         type: balance_transaction_id
   - name: stripeInvoices
     table: analytics_db.data_apps_simulated_stripe.stripe_invoices
-    timestamp_col: created
+    timestamp_col: to_timestamp(created)
     ids:
       - sql: "invoices_id"
         type: invoice_id
-      - sql: "subscription"
-        type: subscription_id
+      - sql: "customer"
+        type: customer_id
   - name: stripeBalanceHistory
     table: analytics_db.data_apps_simulated_stripe.stripe_balance_history
     timestamp_col: created
@@ -44,7 +44,7 @@ inputs:
     table: analytics_db.data_apps_simulated_stripe.stripe_refunds
     timestamp_col: created
     ids:
-      - sql: "customers_id"
-        type: customer_id
+      - sql: "charge"
+        type: charge_id
       - sql: "balance_transaction"
         type: balance_transaction_id

@@ -20,7 +20,40 @@ models:
       validity_time: 24h # 1 day
       id_stitching: 
         model: stripe_id_stitcher
+      macros:
+        - name: end_time
+          value: "2022.10.13"
       features:
+
+# shipping_address_country 
+        - tablevar:
+            name: shipping_address_country_ts
+            ref: 
+              input: stripeCharges
+            filter: billing_details_address_country is not null and billing_details_address_country != ''
+            value: max(created)
+        - tablefeature:
+            name: shipping_address_country
+            ref:
+              input: stripeCharges
+            filter: created = shipping_address_country_ts
+            value: max(billing_details_address_country)
+
+# shipping_address_state
+        - tablevar:
+            name: shipping_address_state_ts
+            ref: 
+              input: stripeCharges
+            filter: billing_details_address_state is not null and billing_details_address_state != ''
+            value: max(created)
+        - tablefeature:
+            name: shipping_address_state
+            ref:
+              input: stripeCharges
+            filter: created = shipping_address_state_ts
+            value: max(billing_details_address_state)
+
+# customer_currency
         - tablevar:
             name: customer_currency_ts
             ref: 
@@ -28,11 +61,41 @@ models:
             filter: currency is not null and currency != ''
             value: max(created)
         - tablefeature:
-            name: latest_currency
+            name: customer_currency
             ref:
               input: stripeCharges
             filter: created = customer_currency_ts
             value: max(currency)
+
+# payment_method_details_card_network
+        - tablevar:
+            name: payment_method_details_card_network_ts
+            ref: 
+              input: stripeCharges
+            filter: payment_method_details_card_network is not null and payment_method_details_card_network != ''
+            value: max(created)
+        - tablefeature:
+            name: payment_method_details_card_network
+            ref:
+              input: stripeCharges
+            filter: created = payment_method_details_card_network_ts
+            value: max(payment_method_details_card_network)
+
+# is_delinquent          
+        - tablefeature:
+            name: is_delinquent
+            ref: 
+              input: stripeCustomers
+            value: max(delinquent)
+
+# has_credit_card
+        - tablefeature:
+            name: has_credit_card
+            ref:
+              input: stripeCharges
+            value: max(case when (payment_method_details_card_funding = 'credit' and status = 'succeeded') then 1 else 0 end)
+
+# days_since_first_sale          
         - tablevar: 
             name: first_sale_time
             ref: 
@@ -41,5 +104,152 @@ models:
             value: min(created)
         - feature:
             name: days_since_first_sale
-            value: current_date() - TO_DATE(first_sale_time)
+            value: datediff(day, date(first_sale_time), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD'))
+
+# days_since_last_purchase          
+        - tablevar: 
+            name: last_purchase_time
+            ref: 
+              input: stripeCharges
+            filter: status = 'succeeded'
+            value: max(created)
+        - feature:
+            name: days_since_last_purchase
+            value: datediff(day, date(last_purchase_time), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD'))
         
+# total_sales
+        - tablefeature: 
+            name: total_sales
+            ref: 
+              input: stripeBalanceHistory
+            filter: type = 'charge'
+            value: sum(amount)
+
+# total_refunds
+        - tablefeature: 
+            name: total_refunds
+            ref: 
+              input: stripeBalanceHistory
+            filter: type = 'refund'
+            value: sum(amount)
+
+# total_fees
+        - tablefeature: 
+            name: total_fees
+            ref: 
+              input: stripeBalanceHistory
+            value: sum(fee)
+
+# total_amt_spent
+        - tablefeature: 
+            name: total_amt_spent
+            ref: 
+              input: stripeBalanceHistory
+            value: sum(amount)
+
+# average_transaction_value
+        - tablefeature: 
+            name: average_transaction_value
+            ref: 
+              input: stripeBalanceHistory
+            value: avg(amount)
+
+# highest_transaction_value
+        - tablefeature: 
+            name: highest_transaction_value
+            ref: 
+              input: stripeBalanceHistory
+            value: max(amount)
+
+# total_net_transaction_amount
+        - tablefeature: 
+            name: total_net_transaction_amount
+            ref: 
+              input: stripeBalanceHistory
+            value: sum(net)
+
+# total_transactions
+        - tablefeature: 
+            name: total_transactions
+            ref: 
+              input: stripeBalanceHistory
+            value: sum(case when type = 'charge' then 1 else 0 end)
+
+# refund_count
+        - tablefeature: 
+            name: refund_count
+            ref: 
+              input: stripeBalanceHistory
+            value: sum(case when type = 'refund' then 1 else 0 end)
+
+# Sales in past n days for n = 365
+        - tablefeature:
+            name: sales_in_past_365_days
+            ref:
+              input: stripeBalanceHistory
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
+            value: sum(case when type = 'charge' then amount else 0 end)
+
+# Refund in past n days for n = 365
+        - tablefeature:
+            name: refund_in_past_365_days
+            ref:
+              input: stripeBalanceHistory
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
+            value: sum(case when type = 'refund' then amount else 0 end)
+
+# Fees in past n days for n = 365
+        - tablefeature:
+            name: fees_in_past_365_days
+            ref:
+              input: stripeBalanceHistory
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
+            value: sum(fee)
+
+# Amount spent in past n days for n = 365
+        - tablefeature:
+            name: amt_spent_in_past_365_days
+            ref:
+              input: stripeBalanceHistory
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
+            value: sum(amount)
+
+# Average transaction value in past n days for n = 365
+        - tablefeature:
+            name: average_transaction_value_in_past_365_days
+            ref:
+              input: stripeBalanceHistory
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
+            value: avg(amount)
+
+# Highest transaction value in past n days for n = 365
+        - tablefeature:
+            name: highest_transaction_value_in_past_365_days
+            ref:
+              input: stripeBalanceHistory
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
+            value: max(amount)
+
+# Net transaction amount in past n days for n = 365
+        - tablefeature:
+            name: net_transaction_amount_in_past_365_days
+            ref:
+              input: stripeBalanceHistory
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
+            value: sum(net)
+
+# Transactions in past n days for n = 365
+        - tablefeature:
+            name: transactions_in_past_365_days
+            ref:
+              input: stripeBalanceHistory
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
+            value: sum(case when type = 'charge' then 1 else 0 end)
+
+# Refund count in past n days for n = 365
+        - tablefeature:
+            name: refund_count_in_past_365_days
+            ref:
+              input: stripeBalanceHistory
+            filter: datediff(day, date(created), TO_DATE( '{{end_time()}}', 'YYYY.MM.DD')) <= 365
+            value: sum(case when type = 'refund' then 1 else 0 end)
