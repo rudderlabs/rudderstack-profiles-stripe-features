@@ -1,0 +1,98 @@
+models:
+- model_spec:
+    edge_sources: [inputs/stripeCustomers, inputs/stripeCharges, inputs/stripeInvoices,
+      inputs/stripeBalanceHistory, inputs/stripeSubscriptions, inputs/stripeRefunds]
+    entity_key: user
+    main_id_type: main_id
+    validity_time: 24h
+  model_type: id_stitcher
+  name: stripe_id_stitcher
+- model_spec:
+    features:
+    - tablevar: {filter: billing_details_address_country is not null and billing_details_address_country
+          != '', name: shipping_address_country_ts, ref: inputs/stripeCharges, value: max(created)}
+    - tablefeature: {filter: created = shipping_address_country_ts, name: shipping_address_country,
+        ref: inputs/stripeCharges, value: max(billing_details_address_country)}
+    - tablevar: {filter: billing_details_address_state is not null and billing_details_address_state
+          != '', name: shipping_address_state_ts, ref: inputs/stripeCharges, value: max(created)}
+    - tablefeature: {filter: created = shipping_address_state_ts, name: shipping_address_state,
+        ref: inputs/stripeCharges, value: max(billing_details_address_state)}
+    - tablevar: {filter: currency is not null and currency != '', name: customer_currency_ts,
+        ref: inputs/stripeCharges, value: max(created)}
+    - tablefeature: {filter: created = customer_currency_ts, name: customer_currency,
+        ref: inputs/stripeCharges, value: max(currency)}
+    - tablevar: {filter: payment_method_details_card_network is not null and payment_method_details_card_network
+          != '', name: payment_method_details_card_network_ts, ref: inputs/stripeCharges,
+        value: max(created)}
+    - tablefeature: {filter: created = payment_method_details_card_network_ts, name: payment_method_details_card_network,
+        ref: inputs/stripeCharges, value: max(payment_method_details_card_network)}
+    - tablefeature: {name: is_delinquent, ref: inputs/stripeCustomers, value: max(delinquent)}
+    - tablefeature: {name: has_credit_card, ref: inputs/stripeCharges, value: max(case
+          when (payment_method_details_card_funding = 'credit' and status = 'succeeded')
+          then 1 else 0 end)}
+    - tablevar: {filter: status = 'succeeded', name: first_sale_time, ref: inputs/stripeCharges,
+        value: min(created)}
+    - feature: {name: days_since_first_sale, value: 'datediff(day, date(first_sale_time),
+          TO_DATE( ''{{end_time()}}'', ''YYYY.MM.DD''))'}
+    - tablevar: {filter: status = 'succeeded', name: last_purchase_time, ref: inputs/stripeCharges,
+        value: max(created)}
+    - feature: {name: days_since_last_purchase, value: 'datediff(day, date(last_purchase_time),
+          TO_DATE( ''{{end_time()}}'', ''YYYY.MM.DD''))'}
+    - tablefeature: {filter: type = 'charge', name: total_sales, ref: inputs/stripeBalanceHistory,
+        value: sum(amount)}
+    - tablefeature: {filter: type = 'refund', name: total_refunds, ref: inputs/stripeBalanceHistory,
+        value: sum(amount)}
+    - tablefeature: {name: total_fees, ref: inputs/stripeBalanceHistory, value: sum(fee)}
+    - tablefeature: {name: total_amt_spent, ref: inputs/stripeBalanceHistory, value: sum(amount)}
+    - tablefeature: {name: average_transaction_value, ref: inputs/stripeBalanceHistory,
+        value: avg(amount)}
+    - tablefeature: {name: highest_transaction_value, ref: inputs/stripeBalanceHistory,
+        value: max(amount)}
+    - tablefeature: {name: total_net_transaction_amount, ref: inputs/stripeBalanceHistory,
+        value: sum(net)}
+    - tablefeature: {name: total_transactions, ref: inputs/stripeBalanceHistory, value: sum(case
+          when type = 'charge' then 1 else 0 end)}
+    - tablefeature: {name: refund_count, ref: inputs/stripeBalanceHistory, value: sum(case
+          when type = 'refund' then 1 else 0 end)}
+    - tablefeature: {filter: 'datediff(day, date(created), TO_DATE( ''{{end_time()}}'',
+          ''YYYY.MM.DD'')) <= 365', name: sales_in_past_365_days, ref: inputs/stripeBalanceHistory,
+        value: sum(case when type = 'charge' then amount else 0 end)}
+    - tablefeature: {filter: 'datediff(day, date(created), TO_DATE( ''{{end_time()}}'',
+          ''YYYY.MM.DD'')) <= 365', name: refund_in_past_365_days, ref: inputs/stripeBalanceHistory,
+        value: sum(case when type = 'refund' then amount else 0 end)}
+    - tablefeature: {filter: 'datediff(day, date(created), TO_DATE( ''{{end_time()}}'',
+          ''YYYY.MM.DD'')) <= 365', name: fees_in_past_365_days, ref: inputs/stripeBalanceHistory,
+        value: sum(fee)}
+    - tablefeature: {filter: 'datediff(day, date(created), TO_DATE( ''{{end_time()}}'',
+          ''YYYY.MM.DD'')) <= 365', name: amt_spent_in_past_365_days, ref: inputs/stripeBalanceHistory,
+        value: sum(amount)}
+    - tablefeature: {filter: 'datediff(day, date(created), TO_DATE( ''{{end_time()}}'',
+          ''YYYY.MM.DD'')) <= 365', name: average_transaction_value_in_past_365_days,
+        ref: inputs/stripeBalanceHistory, value: avg(amount)}
+    - tablefeature: {filter: 'datediff(day, date(created), TO_DATE( ''{{end_time()}}'',
+          ''YYYY.MM.DD'')) <= 365', name: highest_transaction_value_in_past_365_days,
+        ref: inputs/stripeBalanceHistory, value: max(amount)}
+    - tablefeature: {filter: 'datediff(day, date(created), TO_DATE( ''{{end_time()}}'',
+          ''YYYY.MM.DD'')) <= 365', name: net_transaction_amount_in_past_365_days,
+        ref: inputs/stripeBalanceHistory, value: sum(net)}
+    - tablefeature: {filter: 'datediff(day, date(created), TO_DATE( ''{{end_time()}}'',
+          ''YYYY.MM.DD'')) <= 365', name: transactions_in_past_365_days, ref: inputs/stripeBalanceHistory,
+        value: sum(case when type = 'charge' then 1 else 0 end)}
+    - tablefeature: {filter: 'datediff(day, date(created), TO_DATE( ''{{end_time()}}'',
+          ''YYYY.MM.DD'')) <= 365', name: refund_count_in_past_365_days, ref: inputs/stripeBalanceHistory,
+        value: sum(case when type = 'refund' then 1 else 0 end)}
+    - tablefeature: {name: n_subscriptions_total, ref: inputs/stripeSubscriptions,
+        value: count( distinct subscriptions_id)}
+    - tablefeature: {name: n_plans_total, ref: inputs/stripeSubscriptions, value: count(
+          distinct plan_id)}
+    - tablefeature: {name: n_paid_intervals, ref: inputs/stripeCharges, value: count(
+          distinct invoice)}
+    - tablefeature: {filter: '(created is null or created > ''{{end_time()}}'') and
+          (canceled_at is null or canceled_at > ''{{end_time()}}'') and amount_due>0',
+        name: current_amount_due_subscriptions, ref: inputs/stripeInvoicesView, value: sum(amount_due)}
+    id_stitching: models/stripe_id_stitcher
+    macros:
+    - {name: end_time, value: 2022.10.13}
+    validity_time: 24h
+  model_type: feature_table_model
+  name: stripe_features

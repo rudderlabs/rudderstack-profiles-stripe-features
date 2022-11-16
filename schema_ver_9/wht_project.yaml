@@ -1,0 +1,25 @@
+entities:
+- id_types:
+  - {name: main_id}
+  - {name: customer_id}
+  - filters:
+    - {type: exclude, value: ''}
+    - {type: exclude, value: NaN}
+    name: invoice_id
+  - filters:
+    - {type: exclude, value: ''}
+    - {type: exclude, value: NaN}
+    name: balance_transaction_id
+  - filters:
+    - {type: exclude, value: ''}
+    - {type: exclude, value: NaN}
+    name: subscription_id
+  - filters:
+    - {type: exclude, value: ''}
+    - {type: exclude, value: NaN}
+    name: charge_id
+  name: user
+model_folders: [models]
+name: stripe_features
+profile: rs_snowflake_stripe
+schema_version: 9
