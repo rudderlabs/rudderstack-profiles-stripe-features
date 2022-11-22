@@ -50,9 +50,15 @@ inputs:
         type: balance_transaction_id
   - name: stripeInvoicesView
     view: ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA
+    timestamp_col: invoice_created_timestamp
+    ids: 
+      - sql: "customer"
+        type: customer_id
+  - name: stripeSubscriptionsView
+    view: ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.stg_subscription_trans_overview
     timestamp_col: created
     ids: 
-      - sql: "invoices_id"
+      - sql: "invoice"
         type: invoice_id
       - sql: "customer"
         type: customer_id
