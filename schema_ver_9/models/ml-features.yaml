@@ -94,9 +94,10 @@ models:
           - 1}
     - tablefeature: {name: distinct_plans_subscribed, ref: inputs/stripeSubscriptionsView,
         value: array_agg(distinct plan_id)}
-    - tablefeature: {filter: '(charges_created_timestamp is null or charges_created_timestamp > to_timestamp_tz(replace(''{{timestamp}}'',''
-          UTC''))) and (canceled_at is null or canceled_at > to_timestamp_tz(replace(''{{timestamp}}'',''
-          UTC''))) and amount_due > 0', name: current_amount_due_subscriptions, ref: inputs/stripeInvoicesView,
+    - tablefeature: {filter: '(charges_created_timestamp is null or charges_created_timestamp
+          > to_timestamp_tz(replace(''{{timestamp}}'','' UTC''))) and (canceled_at
+          is null or canceled_at > to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))
+          and amount_due > 0', name: current_amount_due_subscriptions, ref: inputs/stripeInvoicesView,
         value: sum(amount_due)}
     - tablefeature: {filter: invoice is not null, name: amt_spent_subscriptions, ref: inputs/stripeSubscriptionsView,
         value: sum(amount) - sum(case when refund_amount is not null then refund_amount
@@ -106,6 +107,15 @@ models:
         ref: inputs/stripeSubscriptionsView, value: min(created)}
     - feature: {name: days_since_first_subscription, value: 'datediff(day, date(first_subscription_time),
           to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))'}
+    - tablefeature: {filter: 'charges_amount > 0 and (canceled_at is null or canceled_at
+          > to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))', name: n_active_subscriptions,
+        ref: inputs/stripeInvoicesView, value: count( distinct subscriptions_id)}
+    - tablefeature: {filter: 'charges_amount > 0 and (canceled_at is null or canceled_at
+          > to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))', name: n_active_plans,
+        ref: inputs/stripeInvoicesView, value: count( distinct plan_id)}
+    - tablefeature: {filter: 'charges_amount > 0 and (canceled_at is null or canceled_at
+          > to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))', name: active_plan_intervals,
+        ref: inputs/stripeInvoicesView, value: array_agg(plan_interval)}
     id_stitching: models/stripe_id_stitcher
     validity_time: 24h
   model_type: feature_table_model

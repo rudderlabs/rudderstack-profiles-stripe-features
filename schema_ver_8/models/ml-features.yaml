@@ -319,3 +319,27 @@ models:
         - feature:
             name: days_since_first_subscription
             value: datediff(day, date(first_subscription_time), to_timestamp_tz(replace('{{timestamp}}',' UTC')))
+
+# n_active_subscriptions
+        - tablefeature: 
+            name: n_active_subscriptions
+            ref: 
+              input: stripeInvoicesView
+            filter: charges_amount > 0 and (canceled_at is null or canceled_at > to_timestamp_tz(replace('{{timestamp}}',' UTC')))
+            value: count( distinct subscriptions_id)
+
+# n_active_plans
+        - tablefeature: 
+            name: n_active_plans
+            ref: 
+              input: stripeInvoicesView
+            filter: charges_amount > 0 and (canceled_at is null or canceled_at > to_timestamp_tz(replace('{{timestamp}}',' UTC')))
+            value: count( distinct plan_id)
+
+# active_plan_intervals
+        - tablefeature: 
+            name: active_plan_intervals
+            ref: 
+              input: stripeInvoicesView
+            filter: charges_amount > 0 and (canceled_at is null or canceled_at > to_timestamp_tz(replace('{{timestamp}}',' UTC')))
+            value: array_agg(plan_interval)
