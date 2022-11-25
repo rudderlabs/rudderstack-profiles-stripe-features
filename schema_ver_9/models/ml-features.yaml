@@ -2,7 +2,7 @@ models:
 - model_spec:
     edge_sources: [inputs/stripeCustomers, inputs/stripeCharges, inputs/stripeInvoices,
       inputs/stripeBalanceHistory, inputs/stripeSubscriptions, inputs/stripeRefunds,
-      inputs/stripeInvoicesView, inputs/stripeSubscriptionsView]
+      inputs/stripeInvoicesView]
     entity_key: user
     main_id_type: main_id
     validity_time: 24h
@@ -10,20 +10,17 @@ models:
   name: stripe_id_stitcher
 - model_spec:
     features:
-    - tablevar: {filter: billing_details_address_country is not null and billing_details_address_country
-          != '', name: shipping_address_country_ts, ref: inputs/stripeCharges, value: max(created)}
+    - tablevar: {filter: currency is not null and currency != '', name: shipping_address_country_ts, ref: inputs/stripeCharges, value: max(created)}
     - tablefeature: {filter: created = shipping_address_country_ts, name: shipping_address_country,
         ref: inputs/stripeCharges, value: max(billing_details_address_country)}
-    - tablevar: {filter: billing_details_address_state is not null and billing_details_address_state
-          != '', name: shipping_address_state_ts, ref: inputs/stripeCharges, value: max(created)}
+    - tablevar: {filter: currency is not null and currency != '', name: shipping_address_state_ts, ref: inputs/stripeCharges, value: max(created)}
     - tablefeature: {filter: created = shipping_address_state_ts, name: shipping_address_state,
         ref: inputs/stripeCharges, value: max(billing_details_address_state)}
     - tablevar: {filter: currency is not null and currency != '', name: customer_currency_ts,
         ref: inputs/stripeCharges, value: max(created)}
     - tablefeature: {filter: created = customer_currency_ts, name: customer_currency,
         ref: inputs/stripeCharges, value: max(currency)}
-    - tablevar: {filter: payment_method_details_card_network is not null and payment_method_details_card_network
-          != '', name: payment_method_details_card_network_ts, ref: inputs/stripeCharges,
+    - tablevar: {filter: currency is not null and currency != '', name: payment_method_details_card_network_ts, ref: inputs/stripeCharges,
         value: max(created)}
     - tablefeature: {filter: created = payment_method_details_card_network_ts, name: payment_method_details_card_network,
         ref: inputs/stripeCharges, value: max(payment_method_details_card_network)}
@@ -45,16 +42,20 @@ models:
         value: sum(amount)}
     - tablefeature: {name: total_fees, ref: inputs/stripeBalanceHistory, value: sum(fee)}
     - tablefeature: {name: total_amt_spent, ref: inputs/stripeBalanceHistory, value: sum(amount)}
+    - tablefeature: {name: total_net_transaction_amount, ref: inputs/stripeBalanceHistory,
+        value: sum(net)}
     - tablefeature: {name: average_transaction_value, ref: inputs/stripeBalanceHistory,
         value: avg(amount)}
     - tablefeature: {name: highest_transaction_value, ref: inputs/stripeBalanceHistory,
         value: max(amount)}
-    - tablefeature: {name: total_net_transaction_amount, ref: inputs/stripeBalanceHistory,
-        value: sum(net)}
     - tablefeature: {name: total_transactions, ref: inputs/stripeBalanceHistory, value: sum(case
           when type = 'charge' then 1 else 0 end)}
     - tablefeature: {name: refund_count, ref: inputs/stripeBalanceHistory, value: sum(case
           when type = 'refund' then 1 else 0 end)}
+    - tablefeature: {filter: status = 'failed', name: total_failed_charge_amount, ref: inputs/stripeCharges,
+        value: sum(amount)}
+    - tablefeature: {name: total_failed_charge_count, ref: inputs/stripeCharges, value: sum(case
+          when status = 'failed' then 1 else 0 end)}
     - tablefeature: {filter: 'datediff(day, date(created), to_timestamp_tz(replace(''{{timestamp}}'',''
           UTC''))) <= 365', name: sales_in_past_365_days, ref: inputs/stripeBalanceHistory,
         value: sum(case when type = 'charge' then amount else 0 end)}
@@ -82,40 +83,48 @@ models:
     - tablefeature: {filter: 'datediff(day, date(created), to_timestamp_tz(replace(''{{timestamp}}'',''
           UTC''))) <= 365', name: refund_count_in_past_365_days, ref: inputs/stripeBalanceHistory,
         value: sum(case when type = 'refund' then 1 else 0 end)}
-    - tablefeature: {name: n_subscriptions_total, ref: inputs/stripeSubscriptionsView,
+    - tablefeature: {name: n_subscriptions_total, ref: inputs/stripeInvoicesView,
         value: count( distinct subscriptions_id)}
-    - tablefeature: {name: n_plans_total, ref: inputs/stripeSubscriptionsView, value: count(
+    - tablefeature: {name: n_plans_total, ref: inputs/stripeInvoicesView, value: count(
           distinct plan_id)}
-    - tablefeature: {name: n_paid_intervals, ref: inputs/stripeSubscriptionsView,
-        value: count( distinct invoice)}
-    - tablevar: {name: subscription_payments, ref: inputs/stripeSubscriptionsView,
-        value: count( distinct invoice)}
-    - tablefeature: {name: n_max_renewals, ref: inputs/stripeSubscriptionsView, value: max(subscription_payments)
+    - tablefeature: {filter: 'charges_created_timestamp is not null or charges_created_timestamp
+          < to_timestamp_tz(replace(''{{timestamp}}'','' UTC''))', name: n_paid_intervals,
+        ref: inputs/stripeInvoicesView, value: sum(case when charges_amount > 0 then 1 else 0 end)}
+    - inputvar:
+        name: subscriptions_renewal_count
+        ref: inputs/stripeInvoicesView
+        value: sum(case when charges_amount > 0 then 1 else 0 end)
+        window:
+          partition_by: [subscriptions_id]
+    - tablefeature: {name: n_max_renewals, ref: inputs/stripeInvoicesView, value: max(subscriptions_renewal_count)
           - 1}
-    - tablefeature: {name: distinct_plans_subscribed, ref: inputs/stripeSubscriptionsView,
+    - tablefeature: {name: distinct_plans_subscribed, ref: inputs/stripeInvoicesView,
         value: array_agg(distinct plan_id)}
     - tablefeature: {filter: '(charges_created_timestamp is null or charges_created_timestamp
           > to_timestamp_tz(replace(''{{timestamp}}'','' UTC''))) and (canceled_at
           is null or canceled_at > to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))
           and amount_due > 0', name: current_amount_due_subscriptions, ref: inputs/stripeInvoicesView,
         value: sum(amount_due)}
-    - tablefeature: {filter: invoice is not null, name: amt_spent_subscriptions, ref: inputs/stripeSubscriptionsView,
-        value: sum(amount) - sum(case when refund_amount is not null then refund_amount
+    - tablefeature: {filter: invoices_id is not null, name: amt_spent_subscriptions, ref: inputs/stripeInvoicesView,
+        value: sum(charges_amount) - sum(case when refund_amount is not null then refund_amount
           else 0 end)}
-    - tablevar: {filter: 'invoice is not null and (canceled_at is null or canceled_at
+    - tablevar: {filter: 'invoices_id is not null and (canceled_at is null or canceled_at
           > to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))', name: first_subscription_time,
-        ref: inputs/stripeSubscriptionsView, value: min(created)}
+        ref: inputs/stripeInvoicesView, value: min(charges_created_timestamp)}
     - feature: {name: days_since_first_subscription, value: 'datediff(day, date(first_subscription_time),
           to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))'}
     - tablefeature: {filter: 'charges_amount > 0 and (canceled_at is null or canceled_at
-          > to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))', name: n_active_subscriptions,
+          > to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))', name: total_active_subscriptions,
         ref: inputs/stripeInvoicesView, value: count( distinct subscriptions_id)}
     - tablefeature: {filter: 'charges_amount > 0 and (canceled_at is null or canceled_at
-          > to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))', name: n_active_plans,
+          > to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))', name: total_active_plans,
         ref: inputs/stripeInvoicesView, value: count( distinct plan_id)}
     - tablefeature: {filter: 'charges_amount > 0 and (canceled_at is null or canceled_at
           > to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))', name: active_plan_intervals,
         ref: inputs/stripeInvoicesView, value: array_agg(plan_interval)}
+    - tablefeature: {filter: 'charges_amount > 0 and (canceled_at is null or canceled_at
+          > to_timestamp_tz(replace(''{{timestamp}}'','' UTC'')))', name: total_active_plan_amount,
+        ref: inputs/stripeInvoicesView, value: sum(plan_amount)}
     id_stitching: models/stripe_id_stitcher
     validity_time: 24h
   model_type: feature_table_model

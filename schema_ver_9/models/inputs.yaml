@@ -40,9 +40,3 @@ inputs:
   name: stripeInvoicesView
   timestamp_col: invoice_created_timestamp
   view: ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA
-- ids:
-  - {sql: invoice, type: invoice_id}
-  - {sql: customer, type: customer_id}
-  name: stripeSubscriptionsView
-  timestamp_col: created
-  view: ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.stg_subscription_trans_overview

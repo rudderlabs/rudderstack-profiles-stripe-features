@@ -257,40 +257,44 @@ models:
         - tablefeature:
             name: n_subscriptions_total
             ref:
-              input: stripeSubscriptionsView
+              input: stripeInvoicesView
             value: count( distinct subscriptions_id)
 
 # n_plans_total
         - tablefeature:
             name: n_plans_total
             ref:
-              input: stripeSubscriptionsView
+              input: stripeInvoicesView
             value: count( distinct plan_id)
 
 # n_paid_intervals
         - tablefeature:
             name: n_paid_intervals
             ref:
-              input: stripeSubscriptionsView
-            value: count( distinct invoice)
+              input: stripeInvoicesView
+            filter: charges_created_timestamp is not null or charges_created_timestamp < to_timestamp_tz(replace('{{timestamp}}',' UTC'))
+            value: count( distinct invoices_id)
 
 # n_max_renewals
-        - tablevar: 
-            name: subscription_payments
-            ref: 
-              input: stripeSubscriptionsView
-            value: count( distinct invoice)
+        - inputvar:
+            name: subscriptions_renewal_count
+            ref:
+                input: stripeInvoicesView
+            value: count(distinct invoices_id)
+            window:
+                partition_by: 
+                  - subscriptions_id  
         - tablefeature:
             name: n_max_renewals
             ref:
-              input: stripeSubscriptionsView
-            value: max(subscription_payments) - 1
+              input: stripeInvoicesView
+            value: max(subscriptions_renewal_count) - 1
 
 # distinct_plans_subscribed
         - tablefeature:
             name: distinct_plans_subscribed
             ref:
-              input: stripeSubscriptionsView
+              input: stripeInvoicesView
             value: array_agg(distinct plan_id)
 
 # current_amount_due_subscriptions
@@ -313,9 +317,9 @@ models:
         - tablevar: 
             name: first_subscription_time
             ref: 
-              input: stripeSubscriptionsView
-            filter: invoice is not null and (canceled_at is null or canceled_at > to_timestamp_tz(replace('{{timestamp}}',' UTC')))
-            value: min(created)
+              input: stripeInvoicesView
+            filter: invoices_id is not null and (canceled_at is null or canceled_at > to_timestamp_tz(replace('{{timestamp}}',' UTC')))
+            value: min(charges_created_timestamp)
         - feature:
             name: days_since_first_subscription
             value: datediff(day, date(first_subscription_time), to_timestamp_tz(replace('{{timestamp}}',' UTC')))
