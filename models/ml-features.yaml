@@ -96,8 +96,7 @@ models:
         value: sum(case when charges_amount > 0 then 1 else 0 end)
         window:
           partition_by: [subscriptions_id]
-    - tablefeature: {name: n_max_renewals, ref: inputs/stripeInvoicesView, value: max(subscriptions_renewal_count)
-          - 1}
+    - tablefeature: {name: n_max_renewals, ref: inputs/stripeInvoicesView, value: case when max(subscriptions_renewal_count) = 0 then null else max(subscriptions_renewal_count) - 1 end}
     - tablefeature: {name: distinct_plans_subscribed, ref: inputs/stripeInvoicesView,
         value: array_agg(distinct plan_id)}
     - tablefeature: {filter: '(charges_created_timestamp is null or charges_created_timestamp
