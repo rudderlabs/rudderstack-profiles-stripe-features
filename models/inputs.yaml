@@ -48,3 +48,9 @@ inputs:
         type: charge_id
       - sql: "balance_transaction"
         type: balance_transaction_id
+  - name: stripeInvoicesView
+    view: ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA
+    timestamp_col: invoice_created_timestamp
+    ids: 
+      - sql: "customer"
+        type: customer_id

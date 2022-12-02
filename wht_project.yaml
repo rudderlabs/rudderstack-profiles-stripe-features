@@ -2,7 +2,7 @@
 name: stripe_features
 
 # Project's yaml schema version
-schema_version: 8
+schema_version: 9
 
 # WH Connection Profile to use.
 profile: rs_snowflake_stripe

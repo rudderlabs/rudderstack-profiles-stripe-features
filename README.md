@@ -47,3 +47,6 @@ group by other_id_type;
 
 ## Know More
 See <a href="https://rudderlabs.github.io/pywht">public docs</a> for more information on using RS360.
+
+## views 
+stripeInvoicesView.sql added in views folder. we are using this view as input for subscription based features.
