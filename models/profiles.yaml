@@ -1,0 +1,404 @@
+# This is a sample file, for detailed reference see: https://rudderlabs.github.io/pywht/
+models:
+  - name: stripe_id_stitcher
+    model_type: id_stitcher
+    model_spec:
+      validity_time: 24h
+      entity_key: user
+      edge_sources:
+        - from: inputs/rsStripeCustomers
+        - from: inputs/rsStripeCharges
+        - from: inputs/rsStripeBalanceHistory
+        - from: inputs/rsStripeSubscriptions
+        - from: inputs/rsStripeRefunds
+        - from: inputs/rsStripeInvoices
+        - from: models/rsStripeInvoicesView
+# Remove the section below, if you don't want to generate a entity_var table
+  - name: stripe_features
+    model_type: feature_table_model
+    model_spec:
+      validity_time: 24h
+      entity_key: user
+      macros:
+        - name: macro_datediff
+          inputs: 
+            - column
+          # value: datediff(day, date({{timestamp_col}}), date('{{end_date}}'))
+          value: "{% if !(end_time|isnil) %} datediff(day, date({{column}}), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) {% else %} datediff(day, date({{column}}), GETDATE()) {% endif %}"
+        - name: macro_datediff_n_equal_365
+          inputs: 
+            - column
+          # value: datediff(day, date({{timestamp_col}}), date('{{end_date}}'))
+          value: "{% if !(end_time|isnil) %} datediff(day, date({{column}}), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date({{column}}), GETDATE()) <= 365 {% endif %}"
+        - name: temp_macro
+          inputs: 
+           - column1
+           - column2
+          value: "{{column1}} > 0 and ({{column2}} is null or {{column2}} > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
+
+      vars:
+
+# shipping_address_country 
+        - entity_var:
+            name: shipping_address_country_ts
+            from: inputs/rsStripeCharges
+            where: currency is not null and currency != ''
+            select: max(created)
+        - entity_var:
+            name: shipping_address_country
+            from: inputs/rsStripeCharges
+            where: created = shipping_address_country_ts
+            select: max(billing_details_address_country)
+
+# shipping_address_state
+        - entity_var:
+            name: shipping_address_state_ts
+            from: inputs/rsStripeCharges
+            where: currency is not null and currency != ''
+            select: max(created)
+        - entity_var:
+            name: shipping_address_state
+            from: inputs/rsStripeCharges
+            where: created = shipping_address_state_ts
+            select: max(billing_details_address_state)
+
+# customer_currency
+        - entity_var:
+            name: customer_currency_ts
+            from: inputs/rsStripeCharges
+            where: currency is not null and currency != ''
+            select: max(created)
+        - entity_var:
+            name: customer_currency
+            from: inputs/rsStripeCharges
+            where: created = customer_currency_ts
+            select: max(currency)
+
+# payment_method_details_card_network
+        - entity_var:
+            name: payment_method_details_card_network_ts
+            from: inputs/rsStripeCharges
+            where: currency is not null and currency != ''
+            select: max(created)
+        - entity_var:
+            name: payment_method_details_card_network
+            from: inputs/rsStripeCharges
+            where: created = payment_method_details_card_network_ts
+            select: max(payment_method_details_card_network)
+
+# is_delinquent          
+        - entity_var:
+            name: is_delinquent
+            from: inputs/rsStripeCustomers
+            select: max(delinquent)
+
+# has_credit_card
+        - entity_var:
+            name: has_credit_card
+            from: inputs/rsStripeCharges
+            select: max(case when (payment_method_details_card_funding = 'credit' and status = 'succeeded') then 1 else 0 end)
+
+# days_since_first_sale          
+        - entity_var: 
+            name: first_sale_time
+            from: inputs/rsStripeCharges
+            where: status = 'succeeded'
+            select: min(created)
+        - entity_var:
+            name: days_since_first_sale
+            # select: "{% if !(end_time|isnil) %} datediff(day, date(first_sale_time), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) {% else %} datediff(day, date(first_sale_time), GETDATE()) {% endif %}"
+            select : "{{macro_datediff('first_sale_time')}}"
+
+# # days_since_last_purchase          
+        - entity_var: 
+            name: last_purchase_time
+            from: inputs/rsStripeCharges
+            where: status = 'succeeded'
+            select: max(created)
+        - entity_var:
+            name: days_since_last_purchase
+            # select: "{% if !(end_time|isnil) %} datediff(day, date(last_purchase_time), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}'))  {% else %} datediff(day, date(last_purchase_time), GETDATE()){% endif %}"
+            select : "{{macro_datediff('last_purchase_time')}}"
+        
+# # total_sales
+        - entity_var: 
+            name: total_sales
+            from: inputs/rsStripeBalanceHistory
+            where: type = 'charge'
+            select: sum(amount)
+
+# # total_refunds
+        - entity_var: 
+            name: total_refunds
+            from: inputs/rsStripeBalanceHistory
+            where: type = 'refund'
+            select: sum(amount)
+
+# # total_fees
+        - entity_var: 
+            name: total_fees
+            from: inputs/rsStripeBalanceHistory
+            select: sum(fee)
+
+# # total_amt_spent
+        - entity_var: 
+            name: total_amt_spent
+            from: inputs/rsStripeBalanceHistory
+            select: sum(amount)
+
+# total_net_transaction_amount
+        - entity_var: 
+            name: total_net_transaction_amount
+            from: inputs/rsStripeBalanceHistory
+            select: sum(net)
+
+# average_transaction_value
+        - entity_var: 
+            name: average_transaction_value
+            from: inputs/rsStripeBalanceHistory
+            select: avg(amount)
+
+# highest_transaction_value
+        - entity_var: 
+            name: highest_transaction_value
+            from: inputs/rsStripeBalanceHistory
+            select: max(amount)
+
+# total_transactions
+        - entity_var: 
+            name: total_transactions
+            from: inputs/rsStripeBalanceHistory
+            select: sum(case when type = 'charge' then 1 else 0 end)
+
+# refund_count
+        - entity_var: 
+            name: refund_count
+            from: inputs/rsStripeBalanceHistory
+            select: sum(case when type = 'refund' then 1 else 0 end)
+
+# total_failed_charge_amount
+        - entity_var: 
+            name: total_failed_charge_amount
+            from: inputs/rsStripeCharges
+            where: status = 'failed'
+            select: sum(amount)
+
+# total_failed_charge_count
+        - entity_var: 
+            name: total_failed_charge_count 
+            from: inputs/rsStripeCharges
+            select: sum(case when status = 'failed' then 1 else 0 end)
+ 
+
+#  Sales in past n days for n = 365
+        - entity_var:
+            name: sales_in_past_365_days
+            from: inputs/rsStripeBalanceHistory
+            where: "{{macro_datediff_n_equal_365('created')}}"
+            # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
+            # where: datediff(day, date(created), date('{{end_date}}')) <= 365
+            select: sum(case when type = 'charge' then amount else 0 end)
+
+# Refund in past n days for n = 365
+        - entity_var:
+            name: refund_in_past_365_days
+            from: inputs/rsStripeBalanceHistory
+            where: "{{macro_datediff_n_equal_365('created')}}"
+            select: sum(case when type = 'refund' then amount else 0 end)
+
+# Fees in past n days for n = 365
+        - entity_var:
+            name: fees_in_past_365_days
+            from: inputs/rsStripeBalanceHistory
+            where: "{{macro_datediff_n_equal_365('created')}}"
+            select: sum(fee)
+
+# Amount spent in past n days for n = 365
+        - entity_var:
+            name: amt_spent_in_past_365_days
+            from: inputs/rsStripeBalanceHistory
+            # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
+            where: "{{macro_datediff_n_equal_365('created')}}"
+            select: sum(amount)
+
+# Average transaction select in past n days for n = 365
+        - entity_var:
+            name: average_transaction_value_in_past_365_days
+            from: inputs/rsStripeBalanceHistory
+            # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
+            where: "{{macro_datediff_n_equal_365('created')}}"
+
+            select: avg(amount)
+
+# Highest transaction select in past n days for n = 365
+        - entity_var:
+            name: highest_transaction_value_in_past_365_days
+            from: inputs/rsStripeBalanceHistory
+            # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
+            where: "{{macro_datediff_n_equal_365('created')}}"
+            select: max(amount)
+
+# Net transaction amount in past n days for n = 365
+        - entity_var:
+            name: net_transaction_amount_in_past_365_days
+            from: inputs/rsStripeBalanceHistory
+            # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
+            where: "{{macro_datediff_n_equal_365('created')}}"
+            select: sum(net)
+
+# Transactions in past n days for n = 365
+        - entity_var:
+            name: transactions_in_past_365_days
+            from: inputs/rsStripeBalanceHistory
+            # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
+            where: "{{macro_datediff_n_equal_365('created')}}"
+
+            select: sum(case when type = 'charge' then 1 else 0 end)
+
+# Refund count in past n days for n = 365
+        - entity_var:
+            name: refund_count_in_past_365_days
+            from: inputs/rsStripeBalanceHistory
+            # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
+            where: "{{macro_datediff_n_equal_365('created')}}"
+            select: sum(case when type = 'refund' then 1 else 0 end)
+
+# n_subscriptions_total
+        - entity_var:
+            name: n_subscriptions_total
+            from: models/rsStripeInvoicesView
+            select: count( distinct subscriptions_id)
+
+# n_plans_total
+        - entity_var:
+            name: n_plans_total
+            from: models/rsStripeInvoicesView
+            select: count( distinct plan_id)
+
+# # n_paid_intervals
+        - entity_var:
+
+            name: n_paid_intervals
+            from: models/rsStripeInvoicesView
+            # where: charges_created_timestamp is not null or charges_created_timestamp < date('{{end_date}}')
+            where: "{% if !(end_time|isnil) %} charges_created_timestamp is not null or charges_created_timestamp < date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} charges_created_timestamp is not null or charges_created_timestamp < GETDATE() {% endif %}"
+            select: count( distinct invoices_id)
+
+# n_max_renewals
+        - input_var:
+            name: subscriptions_renewal_count
+            from: models/rsStripeInvoicesView
+            select: sum(case when charges_amount > 0 then 1 else 0 end)
+            window:
+                partition_by: 
+                  - subscriptions_id  
+        - entity_var:
+            name: n_max_renewals
+            from: models/rsStripeInvoicesView
+            select: case when max(subscriptions_renewal_count) = 0 then null else max(subscriptions_renewal_count) - 1 end
+
+# distinct_plans_subscribed
+        - entity_var:
+            name: distinct_plans_subscribed
+            from: models/rsStripeInvoicesView
+            select: array_agg(distinct plan_id)
+
+# current_amount_due_subscriptions
+        - entity_var:
+            name: current_amount_due_subscriptions
+            from: models/rsStripeInvoicesView
+            where: "( {% if !(end_time|isnil) %} charges_created_timestamp > date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} charges_created_timestamp > GETDATE() {% endif %} and canceled_at is null )  or ( {% if !(end_time|isnil) %} canceled_at > date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} canceled_at > GETDATE() {% endif %}  and amount_due > 0 )"
+            select: sum(amount_due)
+
+# amt_spent_subscriptions
+        - entity_var:
+            name: amt_spent_subscriptions
+            from: models/rsStripeInvoicesView
+            where: invoices_id is not null
+            select: sum(charges_amount) - sum(case when refund_amount is not null then refund_amount else 0 end)
+
+# days_since_first_subscription
+        - entity_var: 
+            name: first_subscription_time
+            from: models/rsStripeInvoicesView
+            where: "invoices_id is not null and (canceled_at is null or {% if !(end_time|isnil) %} canceled_at > date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} canceled_at > GETDATE() {% endif %})"
+            select: min(charges_created_timestamp)
+        - entity_var:
+            name: days_since_first_subscription
+            # select: datediff(day, date(first_subscription_time), date('{{end_date}}'))
+            
+            select: "{% if !(end_time|isnil) %} datediff(day, date(first_subscription_time), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) {% else %} datediff(day, date(first_subscription_time), GETDATE()) {% endif %}"
+
+# total_active_subscriptions
+        - entity_var: 
+            name: total_active_subscriptions
+            from: models/rsStripeInvoicesView
+        #     where: "charges_amount > 0 and (canceled_at is null or canceled_at > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
+            where: "{{temp_macro('charges_amount','canceled_at')}}"
+            select: count( distinct subscriptions_id)
+
+# # total_active_plans
+        - entity_var: 
+            name: total_active_plans
+            from: models/rsStripeInvoicesView
+        #     where: "charges_amount > 0 and (canceled_at is null or canceled_at > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
+            where: "{{temp_macro('charges_amount','canceled_at')}}"
+            select: count( distinct plan_id)
+
+# active_plan_intervals
+        - entity_var: 
+            name: active_plan_intervals
+            from: models/rsStripeInvoicesView
+        #     where: "charges_amount > 0 and (canceled_at is null or canceled_at > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
+            where: "{{temp_macro('charges_amount','canceled_at')}}"
+            select: array_agg(plan_interval)
+
+# total_active_plan_amount
+        - entity_var: 
+            name: total_active_plan_amount
+            from: models/rsStripeInvoicesView
+        #     where: "charges_amount > 0 and (canceled_at is null or canceled_at > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
+            where: "{{temp_macro('charges_amount','canceled_at')}}"
+            select: sum(plan_amount)
+
+      features:
+        - shipping_address_country
+        - shipping_address_state
+        - customer_currency
+        - payment_method_details_card_network
+        - is_delinquent
+        - has_credit_card
+        - days_since_first_sale
+        - days_since_last_purchase
+        - total_sales
+        - total_refunds
+        - total_fees
+        - total_amt_spent
+        - total_net_transaction_amount
+        - average_transaction_value
+        - highest_transaction_value
+        - total_transactions
+        - refund_count
+        - total_failed_charge_amount
+        - total_failed_charge_count
+        - sales_in_past_365_days
+        - refund_in_past_365_days
+        - fees_in_past_365_days
+        - amt_spent_in_past_365_days
+        - average_transaction_value_in_past_365_days
+        - highest_transaction_value_in_past_365_days
+        - net_transaction_amount_in_past_365_days
+        - transactions_in_past_365_days
+        - refund_count_in_past_365_days
+        - n_subscriptions_total
+        - n_plans_total
+        - n_paid_intervals
+        - n_max_renewals
+        - distinct_plans_subscribed
+        - current_amount_due_subscriptions
+        - amt_spent_subscriptions
+        - days_since_first_subscription
+        - total_active_subscriptions
+        - total_active_plans
+        - active_plan_intervals
+        - total_active_plan_amount

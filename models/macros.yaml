@@ -1,0 +1,6 @@
+ macros:
+        - name: macro_datediff
+          inputs: 
+            - column
+          # value: datediff(day, date({{timestamp_col}}), date('{{end_date}}'))
+          value: "{% if !(end_time|isnil) %} datediff(day, date({{column}}), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) {% else %} datediff(day, date({{column}}), GETDATE()) {% endif %}"
