@@ -5,7 +5,7 @@ inputs:
         type: customer_id
     name: stripeCustomers
     occurred_at_col: timestamp
-    table: analytics_db.data_apps_simulated_stripe.stripe_customers
+    table: analytics_db.data_apps_simulated_stripe.customers
     source_metadata:
       role: singer-stripe
       category: singer-protocol
@@ -24,7 +24,7 @@ inputs:
         type: balance_transaction_id
     name: stripeCharges
     occurred_at_col: created
-    table: analytics_db.data_apps_simulated_stripe.stripe_charges
+    table: analytics_db.data_apps_simulated_stripe.charges
     source_metadata:
       role: singer-stripe
       category: singer-protocol
@@ -37,7 +37,7 @@ inputs:
         type: customer_id
     name: stripeInvoices
     occurred_at_col: to_timestamp(created)
-    table: analytics_db.data_apps_simulated_stripe.stripe_invoices
+    table: analytics_db.data_apps_simulated_stripe.invoices
     source_metadata:
       role: singer-stripe
       category: singer-protocol
@@ -47,7 +47,7 @@ inputs:
         type: balance_transaction_id
     name: stripeBalanceHistory
     occurred_at_col: created
-    table: analytics_db.data_apps_simulated_stripe.stripe_balance_history
+    table: analytics_db.data_apps_simulated_stripe.balance_history
     source_metadata:
       role: singer-stripe
       category: singer-protocol
@@ -60,7 +60,7 @@ inputs:
         type: customer_id
     name: stripeSubscriptions
     occurred_at_col: created
-    table: analytics_db.data_apps_simulated_stripe.stripe_subscriptions
+    table: analytics_db.data_apps_simulated_stripe.subscriptions
     source_metadata:
       role: singer-stripe
       category: singer-protocol
@@ -73,7 +73,7 @@ inputs:
         type: balance_transaction_id
     name: stripeRefunds
     occurred_at_col: created
-    table: analytics_db.data_apps_simulated_stripe.stripe_refunds
+    table: analytics_db.data_apps_simulated_stripe.refunds
     source_metadata:
       role: singer-stripe
       category: singer-protocol
