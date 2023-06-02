@@ -25,16 +25,17 @@ models:
             - column
           # value: datediff(day, date({{timestamp_col}}), date('{{end_date}}'))
           value: "{% if !(end_time|isnil) %} datediff(day, date({{column}}), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) {% else %} datediff(day, date({{column}}), GETDATE()) {% endif %}"
-        - name: macro_datediff_n_equal_365
+        - name: macro_datediff_n
           inputs: 
             - column
+            - number_of_days
           # value: datediff(day, date({{timestamp_col}}), date('{{end_date}}'))
-          value: "{% if !(end_time|isnil) %} datediff(day, date({{column}}), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date({{column}}), GETDATE()) <= 365 {% endif %}"
-        - name: temp_macro
+          value: "{% if !(end_time|isnil) %} datediff(day, date({{column}}), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <={{number_of_days}} {% else %} datediff(day, date({{column}}), GETDATE()) <= {{number_of_days}} {% endif %}"
+        - name: active_plans_filter
           inputs: 
-           - column1
-           - column2
-          value: "{{column1}} > 0 and ({{column2}} is null or {{column2}} > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
+           - charge_amt_col
+           - cancel_date_col
+          value: "{{charge_amt_col}} > 0 and ({{cancel_date_col}} is null or {{cancel_date_col}} > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
 
       vars:
 
@@ -194,7 +195,7 @@ models:
         - entity_var:
             name: sales_in_past_365_days
             from: inputs/rsStripeBalanceHistory
-            where: "{{macro_datediff_n_equal_365('created')}}"
+            where: "{{macro_datediff_n('created',365)}}"
             # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
             # where: datediff(day, date(created), date('{{end_date}}')) <= 365
             select: sum(case when type = 'charge' then amount else 0 end)
@@ -203,14 +204,14 @@ models:
         - entity_var:
             name: refund_in_past_365_days
             from: inputs/rsStripeBalanceHistory
-            where: "{{macro_datediff_n_equal_365('created')}}"
+            where: "{{macro_datediff_n('created','365')}}"
             select: sum(case when type = 'refund' then amount else 0 end)
 
 # Fees in past n days for n = 365
         - entity_var:
             name: fees_in_past_365_days
             from: inputs/rsStripeBalanceHistory
-            where: "{{macro_datediff_n_equal_365('created')}}"
+            where: "{{macro_datediff_n('created','365')}}"
             select: sum(fee)
 
 # Amount spent in past n days for n = 365
@@ -218,7 +219,7 @@ models:
             name: amt_spent_in_past_365_days
             from: inputs/rsStripeBalanceHistory
             # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
-            where: "{{macro_datediff_n_equal_365('created')}}"
+            where: "{{macro_datediff_n('created','365')}}"
             select: sum(amount)
 
 # Average transaction select in past n days for n = 365
@@ -226,7 +227,7 @@ models:
             name: average_transaction_value_in_past_365_days
             from: inputs/rsStripeBalanceHistory
             # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
-            where: "{{macro_datediff_n_equal_365('created')}}"
+            where: "{{macro_datediff_n('created','365')}}"
 
             select: avg(amount)
 
@@ -235,7 +236,7 @@ models:
             name: highest_transaction_value_in_past_365_days
             from: inputs/rsStripeBalanceHistory
             # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
-            where: "{{macro_datediff_n_equal_365('created')}}"
+            where: "{{macro_datediff_n('created','365')}}"
             select: max(amount)
 
 # Net transaction amount in past n days for n = 365
@@ -243,7 +244,7 @@ models:
             name: net_transaction_amount_in_past_365_days
             from: inputs/rsStripeBalanceHistory
             # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
-            where: "{{macro_datediff_n_equal_365('created')}}"
+            where: "{{macro_datediff_n('created','365')}}"
             select: sum(net)
 
 # Transactions in past n days for n = 365
@@ -251,7 +252,7 @@ models:
             name: transactions_in_past_365_days
             from: inputs/rsStripeBalanceHistory
             # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
-            where: "{{macro_datediff_n_equal_365('created')}}"
+            where: "{{macro_datediff_n('created','365')}}"
 
             select: sum(case when type = 'charge' then 1 else 0 end)
 
@@ -260,7 +261,7 @@ models:
             name: refund_count_in_past_365_days
             from: inputs/rsStripeBalanceHistory
             # where: "{% if !(end_time|isnil) %} datediff(day, date(created), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <=365 {% else %} datediff(day, date(created), GETDATE()) <= 365 {% endif %}"
-            where: "{{macro_datediff_n_equal_365('created')}}"
+            where: "{{macro_datediff_n('created','365')}}"
             select: sum(case when type = 'refund' then 1 else 0 end)
 
 # n_subscriptions_total
@@ -334,7 +335,7 @@ models:
             name: total_active_subscriptions
             from: models/rsStripeInvoicesView
         #     where: "charges_amount > 0 and (canceled_at is null or canceled_at > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
-            where: "{{temp_macro('charges_amount','canceled_at')}}"
+            where: "{{active_plans_filter('charges_amount','canceled_at')}}"
             select: count( distinct subscriptions_id)
 
 # # total_active_plans
@@ -342,7 +343,7 @@ models:
             name: total_active_plans
             from: models/rsStripeInvoicesView
         #     where: "charges_amount > 0 and (canceled_at is null or canceled_at > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
-            where: "{{temp_macro('charges_amount','canceled_at')}}"
+            where: "{{active_plans_filter('charges_amount','canceled_at')}}"
             select: count( distinct plan_id)
 
 # active_plan_intervals
@@ -350,7 +351,7 @@ models:
             name: active_plan_intervals
             from: models/rsStripeInvoicesView
         #     where: "charges_amount > 0 and (canceled_at is null or canceled_at > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
-            where: "{{temp_macro('charges_amount','canceled_at')}}"
+            where: "{{active_plans_filter('charges_amount','canceled_at')}}"
             select: array_agg(plan_interval)
 
 # total_active_plan_amount
@@ -358,7 +359,7 @@ models:
             name: total_active_plan_amount
             from: models/rsStripeInvoicesView
         #     where: "charges_amount > 0 and (canceled_at is null or canceled_at > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
-            where: "{{temp_macro('charges_amount','canceled_at')}}"
+            where: "{{active_plans_filter('charges_amount','canceled_at')}}"
             select: sum(plan_amount)
 
       features:
