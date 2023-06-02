@@ -1,0 +1,44 @@
+connection: rs_snowflake_stripe
+entities:
+  - id_column_name: main_id
+    id_stitcher: models/stripe_id_stitcher
+    id_types:
+      - main_id
+      - customer_id
+      - invoice_id
+      - balance_transaction_id
+      - subscription_id
+      - charge_id
+    name: user
+id_types:
+  - filters:
+      - type: exclude
+        value: ""
+      - type: exclude
+        value: NaN
+    name: balance_transaction_id
+  - filters:
+      - type: exclude
+        value: ""
+      - type: exclude
+        value: NaN
+    name: charge_id
+  - name: customer_id
+  - filters:
+      - type: exclude
+        value: ""
+      - type: exclude
+        value: NaN
+    name: invoice_id
+  - name: main_id
+  - filters:
+      - type: exclude
+        value: ""
+      - type: exclude
+        value: NaN
+    name: subscription_id
+include_untimed: true
+model_folders:
+  - models
+name: stripe_features
+schema_version: 34

@@ -1,56 +1,68 @@
-# This is a sample file, for detailed reference see: https://rudderlabs.github.io/pywht/
 inputs:
-  - name: stripeCustomers
+  - ids:
+      - entity: user
+        select: customers_id
+        type: customer_id
+    name: stripeCustomers
+    occurred_at_col: timestamp
     table: analytics_db.data_apps_simulated_stripe.stripe_customers
-    timestamp_col: timestamp
-    ids:
-      - sql: "customers_id"
+  - ids:
+      - entity: user
+        select: customer
         type: customer_id
-  - name: stripeCharges
+      - entity: user
+        select: invoice
+        type: invoice_id
+      - entity: user
+        select: charges_id
+        type: charge_id
+      - entity: user
+        select: balance_transaction
+        type: balance_transaction_id
+    name: stripeCharges
+    occurred_at_col: created
     table: analytics_db.data_apps_simulated_stripe.stripe_charges
-    timestamp_col: created
-    ids:
-      - sql: "customer"
-        type: customer_id
-      - sql: "invoice"
+  - ids:
+      - entity: user
+        select: invoices_id
         type: invoice_id
-      - sql: "charges_id"
-        type: charge_id
-      - sql: "balance_transaction"
-        type: balance_transaction_id
-  - name: stripeInvoices
+      - entity: user
+        select: customer
+        type: customer_id
+    name: stripeInvoices
+    occurred_at_col: to_timestamp(created)
     table: analytics_db.data_apps_simulated_stripe.stripe_invoices
-    timestamp_col: to_timestamp(created)
-    ids:
-      - sql: "invoices_id"
-        type: invoice_id
-      - sql: "customer"
-        type: customer_id
-  - name: stripeBalanceHistory
+  - ids:
+      - entity: user
+        select: id
+        type: balance_transaction_id
+    name: stripeBalanceHistory
+    occurred_at_col: created
     table: analytics_db.data_apps_simulated_stripe.stripe_balance_history
-    timestamp_col: created
-    ids:
-      - sql: "id"
-        type: balance_transaction_id
-  - name: stripeSubscriptions
-    table: analytics_db.data_apps_simulated_stripe.stripe_subscriptions
-    timestamp_col: created
-    ids:
-      - sql: "subscriptions_id"
+  - ids:
+      - entity: user
+        select: subscriptions_id
         type: subscription_id
-      - sql: "customer"
+      - entity: user
+        select: customer
         type: customer_id
-  - name: stripeRefunds
-    table: analytics_db.data_apps_simulated_stripe.stripe_refunds
-    timestamp_col: created
-    ids:
-      - sql: "charge"
+    name: stripeSubscriptions
+    occurred_at_col: created
+    table: analytics_db.data_apps_simulated_stripe.stripe_subscriptions
+  - ids:
+      - entity: user
+        select: charge
         type: charge_id
-      - sql: "balance_transaction"
+      - entity: user
+        select: balance_transaction
         type: balance_transaction_id
-  - name: stripeInvoicesView
-    view: ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA
-    timestamp_col: invoice_created_timestamp
-    ids: 
-      - sql: "customer"
+    name: stripeRefunds
+    occurred_at_col: created
+    table: analytics_db.data_apps_simulated_stripe.stripe_refunds
+  - ids:
+      - entity: user
+        select: customer
         type: customer_id
+    name: stripeInvoicesView
+    occurred_at_col: invoice_created_timestamp
+    view: ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA
