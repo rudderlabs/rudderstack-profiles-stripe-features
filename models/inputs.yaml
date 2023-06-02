@@ -6,6 +6,9 @@ inputs:
     name: stripeCustomers
     occurred_at_col: timestamp
     table: analytics_db.data_apps_simulated_stripe.stripe_customers
+    source_metadata:
+      role: singer-stripe
+      category: singer-protocol
   - ids:
       - entity: user
         select: customer
@@ -22,6 +25,9 @@ inputs:
     name: stripeCharges
     occurred_at_col: created
     table: analytics_db.data_apps_simulated_stripe.stripe_charges
+    source_metadata:
+      role: singer-stripe
+      category: singer-protocol
   - ids:
       - entity: user
         select: invoices_id
@@ -32,6 +38,9 @@ inputs:
     name: stripeInvoices
     occurred_at_col: to_timestamp(created)
     table: analytics_db.data_apps_simulated_stripe.stripe_invoices
+    source_metadata:
+      role: singer-stripe
+      category: singer-protocol
   - ids:
       - entity: user
         select: id
@@ -39,6 +48,9 @@ inputs:
     name: stripeBalanceHistory
     occurred_at_col: created
     table: analytics_db.data_apps_simulated_stripe.stripe_balance_history
+    source_metadata:
+      role: singer-stripe
+      category: singer-protocol
   - ids:
       - entity: user
         select: subscriptions_id
@@ -49,6 +61,9 @@ inputs:
     name: stripeSubscriptions
     occurred_at_col: created
     table: analytics_db.data_apps_simulated_stripe.stripe_subscriptions
+    source_metadata:
+      role: singer-stripe
+      category: singer-protocol
   - ids:
       - entity: user
         select: charge
@@ -59,6 +74,9 @@ inputs:
     name: stripeRefunds
     occurred_at_col: created
     table: analytics_db.data_apps_simulated_stripe.stripe_refunds
+    source_metadata:
+      role: singer-stripe
+      category: singer-protocol
   - ids:
       - entity: user
         select: customer
@@ -66,3 +84,6 @@ inputs:
     name: stripeInvoicesView
     occurred_at_col: invoice_created_timestamp
     view: ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA
+    source_metadata:
+      role: singer-stripe
+      category: singer-protocol
