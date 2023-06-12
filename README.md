@@ -1,52 +1,69 @@
-# RS360
+# About
+This is a Profiles library project to create user features from Stripe tables created using Rudderstack Extracts/ETL
 
-## How to Use
+# Inputs
+## Raw Tables
+| name | table | path |
+| ---- | ----- | ---- |
+| stripeCustomers | customers | analytics_db.data_apps_simulated_stripe.customers |
+| stripeCharges | charges | analytics_db.data_apps_simulated_stripe.charges |
+| stripeInvoices | invoices | analytics_db.data_apps_simulated_stripe.invoices |
+| stripeBalanceHistory | balance_history | analytics_db.data_apps_simulated_stripe.balance_history |
+| stripeSubscriptions | subscriptions | analytics_db.data_apps_simulated_stripe.subscriptions |
+| stripeRefunds | refunds | analytics_db.data_apps_simulated_stripe.refunds |
+| stripeInvoicesView | STG_INVOICES_DATA | ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA |
+# Identity Stitching
+## user identities
+| name | exclusions | sourced_from |
+| ---- | ---------- | ------------ |
+| balance_transaction_id | NaN | ["stripeCharges:balance_transaction","stripeBalanceHistory:id","stripeRefunds:balance_transaction"] |
+| charge_id | NaN | ["stripeCharges:charges_id","stripeRefunds:charge"] |
+| customer_id |  | ["stripeCustomers:customers_id","stripeCharges:customer","stripeInvoices:customer","stripeSubscriptions:customer","stripeInvoicesView:customer"] |
+| invoice_id | NaN | ["stripeCharges:invoice","stripeInvoices:invoices_id"] |
+| main_id |  | [] |
+| subscription_id | NaN | ["stripeSubscriptions:subscriptions_id"] |
+# Features
+## user features
+| Feature | Computed From | Description |
+| ------- | ------------- | ----------- |
+| active_plan_intervals | stripeInvoicesView |  |
+| amt_spent_in_past_365_days | stripeBalanceHistory |  |
+| amt_spent_subscriptions | stripeInvoicesView |  |
+| average_transaction_value | stripeBalanceHistory |  |
+| average_transaction_value_in_past_365_days | stripeBalanceHistory |  |
+| current_amount_due_subscriptions | stripeInvoicesView |  |
+| customer_currency | stripeCharges |  |
+| days_since_first_sale |  |  |
+| days_since_first_subscription |  |  |
+| days_since_last_purchase |  |  |
+| distinct_plans_subscribed | stripeInvoicesView |  |
+| fees_in_past_365_days | stripeBalanceHistory |  |
+| has_credit_card | stripeCharges |  |
+| highest_transaction_value | stripeBalanceHistory |  |
+| highest_transaction_value_in_past_365_days | stripeBalanceHistory |  |
+| is_delinquent | stripeCustomers |  |
+| n_max_renewals | stripeInvoicesView |  |
+| n_paid_intervals | stripeInvoicesView |  |
+| n_plans_total | stripeInvoicesView |  |
+| n_subscriptions_total | stripeInvoicesView |  |
+| net_transaction_amount_in_past_365_days | stripeBalanceHistory |  |
+| payment_method_details_card_network | stripeCharges |  |
+| refund_count | stripeBalanceHistory |  |
+| refund_count_in_past_365_days | stripeBalanceHistory |  |
+| refund_in_past_365_days | stripeBalanceHistory |  |
+| sales_in_past_365_days | stripeBalanceHistory |  |
+| shipping_address_country | stripeCharges |  |
+| shipping_address_state | stripeCharges |  |
+| total_active_plan_amount | stripeInvoicesView |  |
+| total_active_plans | stripeInvoicesView |  |
+| total_active_subscriptions | stripeInvoicesView |  |
+| total_amt_spent | stripeBalanceHistory |  |
+| total_failed_charge_amount | stripeCharges |  |
+| total_failed_charge_count | stripeCharges |  |
+| total_fees | stripeBalanceHistory |  |
+| total_net_transaction_amount | stripeBalanceHistory |  |
+| total_refunds | stripeBalanceHistory |  |
+| total_sales | stripeBalanceHistory |  |
+| total_transactions | stripeBalanceHistory |  |
+| transactions_in_past_365_days | stripeBalanceHistory |  |
 
-After installing RS360 and configuring your connections profile, you need to change inputs.yaml with names of your source tables. Once that is done, please mention their names as inputs in models.yaml and define specs for creating ID stitcher / feature table. 
-
-You can use this command to generate SQL, which will also tell you in case there are syntax errors in your model YAML file.
-
-```shell script
-wht compile
-```
-
-If there are no errors, use this command to create the output table on the warehouse.
-
-```shell script
-wht run
-```
-
-## SQL queries for data analysis.
-
-Let's assume that the materialized table created by RS360 was named MATERIAL_USER_STITCHING_26f16d24_29 , inside schema RUDDER_360 of database RUDDER_EVENTS_PRODUCTION. The materialized table name will change with each run, the view USER_STITCHING will point to the most recently created one.
-
-Total number of records:
-```sql
-select count(*) from RUDDER_EVENTS_PRODUCTION.RUDDER_360.USER_STITCHING;
-```
-
-Total number of distinct records (main_id):
-```sql
-select count(distinct main_id) from RUDDER_EVENTS_PRODUCTION.RUDDER_360.USER_STITCHING;
-```
-
-Max mappings to a single canonical ID:
-```sql
-select main_id, count(other_id) as "CNT"
-from RUDDER_EVENTS_PRODUCTION.RUDDER_360.USER_STITCHING
-group by main_id
-order by CNT DESC;
-```
-
-Say there was a canonical ID '0013d4fa-fdf7-5736-85d1-063378251398' that had more than 1000 mappings. So to check more on other ID types and their count:
-```sql
-select count (distinct other_id) as "OTHER_ID_COUNT", other_id_type from RUDDER_EVENTS_PRODUCTION.RUDDER_360.USER_STITCHING
-where main_id = '0013d4fa-fdf7-5736-85d1-063378251398'
-group by other_id_type;
-```
-
-## Know More
-See <a href="https://rudderlabs.github.io/pywht">public docs</a> for more information on using RS360.
-
-## views 
-stripeInvoicesView.sql added in views folder. we are using this view as input for subscription based features.
