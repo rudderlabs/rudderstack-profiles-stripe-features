@@ -10,6 +10,7 @@ entities:
       - subscription_id
       - charge_id
     name: user
+
 id_types:
   - filters:
       - type: exclude
@@ -17,28 +18,37 @@ id_types:
       - type: exclude
         value: NaN
     name: balance_transaction_id
+
   - filters:
       - type: exclude
         value: ""
       - type: exclude
         value: NaN
     name: charge_id
+
   - name: customer_id
+
   - filters:
       - type: exclude
         value: ""
       - type: exclude
         value: NaN
     name: invoice_id
+
   - name: main_id
+
   - filters:
       - type: exclude
         value: ""
       - type: exclude
         value: NaN
     name: subscription_id
+
 include_untimed: true
+
 model_folders:
   - models
+
 name: stripe_features
+
 schema_version: 34
