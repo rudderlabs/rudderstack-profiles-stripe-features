@@ -12,7 +12,6 @@ models:
       validity_time: 24h
     model_type: id_stitcher
     name: stripe_id_stitcher
-
   - model_spec:
       entity_key: user
       features:
@@ -56,7 +55,6 @@ models:
         - total_active_plans
         - active_plan_intervals
         - total_active_plan_amount
-
       macros:
         - inputs:
             - column
@@ -69,213 +67,179 @@ models:
           value: "{% if !(end_time|isnil) %} datediff(day, date({{column}}), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <={{number_of_days}} {% else %} datediff(day, date({{column}}), GETDATE()) <= {{number_of_days}} {% endif %}"
         - name: active_plans_filter
           inputs:
-           - charge_amt_col
-           - cancel_date_col
+            - charge_amt_col
+            - cancel_date_col
           value: "{{charge_amt_col}} > 0 and ({{cancel_date_col}} is null or {{cancel_date_col}} > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
-
       validity_time: 24h
-
       vars:
         - entity_var:
             from: inputs/stripeCharges
             name: shipping_address_country_ts
             select: max(created)
             where: currency is not null and currency != ''
-
         - entity_var:
             from: inputs/stripeCharges
             name: shipping_address_country
             select: max(billing_details_address_country)
             where: created = shipping_address_country_ts
-
         - entity_var:
             from: inputs/stripeCharges
             name: shipping_address_state_ts
             select: max(created)
             where: currency is not null and currency != ''
-
         - entity_var:
             from: inputs/stripeCharges
             name: shipping_address_state
             select: max(billing_details_address_state)
             where: created = shipping_address_state_ts
-
         - entity_var:
             from: inputs/stripeCharges
             name: customer_currency_ts
             select: max(created)
             where: currency is not null and currency != ''
-
         - entity_var:
             from: inputs/stripeCharges
             name: customer_currency
             select: max(currency)
             where: created = customer_currency_ts
-
         - entity_var:
             from: inputs/stripeCharges
             name: payment_method_details_card_network_ts
             select: max(created)
             where: currency is not null and currency != ''
-
         - entity_var:
             from: inputs/stripeCharges
             name: payment_method_details_card_network
             select: max(payment_method_details_card_network)
             where: created = payment_method_details_card_network_ts
-
         - entity_var:
             from: inputs/stripeCustomers
             name: is_delinquent
             select: max(delinquent)
-
         - entity_var:
             from: inputs/stripeCharges
             name: has_credit_card
             select: max(case when (payment_method_details_card_funding = 'credit' and status = 'succeeded') then 1 else 0 end)
-
         - entity_var:
             from: inputs/stripeCharges
             name: first_sale_time
             select: min(created)
             where: status = 'succeeded'
-
         - entity_var:
             name: days_since_first_sale
             select: "{{ macro_datediff('first_sale_time') }}"
-
+            dependencies:
+              - first_sale_time
         - entity_var:
             from: inputs/stripeCharges
             name: last_purchase_time
             select: max(created)
             where: status = 'succeeded'
-
         - entity_var:
             name: days_since_last_purchase
             select: "{{ macro_datediff('last_purchase_time') }}"
-
+            dependencies:
+              - last_purchase_time
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: total_sales
             select: sum(amount)
             where: type = 'charge'
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: total_refunds
             select: sum(amount)
             where: type = 'refund'
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: total_fees
             select: sum(fee)
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: total_amt_spent
             select: sum(amount)
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: total_net_transaction_amount
             select: sum(net)
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: average_transaction_value
             select: avg(amount)
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: highest_transaction_value
             select: max(amount)
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: total_transactions
             select: sum(case when type = 'charge' then 1 else 0 end)
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: refund_count
             select: sum(case when type = 'refund' then 1 else 0 end)
-
         - entity_var:
             from: inputs/stripeCharges
             name: total_failed_charge_amount
             select: sum(amount)
             where: status = 'failed'
-
         - entity_var:
             from: inputs/stripeCharges
             name: total_failed_charge_count
             select: sum(case when status = 'failed' then 1 else 0 end)
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: sales_in_past_365_days
             select: sum(case when type = 'charge' then amount else 0 end)
             where: '{{ macro_datediff(''created'') }} <= 365'
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: refund_in_past_365_days
             select: sum(case when type = 'refund' then amount else 0 end)
             where: '{{ macro_datediff_n(''created'',''365'') }}'
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: fees_in_past_365_days
             select: sum(fee)
             where: '{{ macro_datediff_n(''created'',''365'') }}'
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: amt_spent_in_past_365_days
             select: sum(amount)
             where: '{{ macro_datediff_n(''created'',''365'') }}'
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: average_transaction_value_in_past_365_days
             select: avg(amount)
             where: '{{ macro_datediff_n(''created'',''365'') }}'
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: highest_transaction_value_in_past_365_days
             select: max(amount)
             where: '{{ macro_datediff_n(''created'',''365'') }}'
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: net_transaction_amount_in_past_365_days
             select: sum(net)
             where: '{{ macro_datediff_n(''created'',''365'') }}'
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: transactions_in_past_365_days
             select: sum(case when type = 'charge' then 1 else 0 end)
             where: '{{ macro_datediff_n(''created'',''365'') }}'
-
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: refund_count_in_past_365_days
             select: sum(case when type = 'refund' then 1 else 0 end)
             where: '{{ macro_datediff_n(''created'',''365'') }}'
-
         - entity_var:
             from: inputs/stripeInvoicesView
             name: n_subscriptions_total
             select: count( distinct subscriptions_id)
-
         - entity_var:
             from: inputs/stripeInvoicesView
             name: n_plans_total
             select: count( distinct plan_id)
-
         - entity_var:
             from: inputs/stripeInvoicesView
             name: n_paid_intervals
@@ -288,62 +252,53 @@ models:
             window:
               partition_by:
                 - subscriptions_id
-
         - entity_var:
             from: inputs/stripeInvoicesView
             name: n_max_renewals
             select: case when max(subscriptions_renewal_count) = 0 then null else max(subscriptions_renewal_count) - 1 end
-
         - entity_var:
             from: inputs/stripeInvoicesView
             name: distinct_plans_subscribed
             select: array_agg(distinct plan_id)
-
         - entity_var:
             from: inputs/stripeInvoicesView
             name: current_amount_due_subscriptions
             select: sum(amount_due)
             where: "( {% if !(end_time|isnil) %} charges_created_timestamp > date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} charges_created_timestamp > GETDATE() {% endif %} and canceled_at is null )  or ( {% if !(end_time|isnil) %} canceled_at > date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} canceled_at > GETDATE() {% endif %}  and amount_due > 0 )"
-
         - entity_var:
             from: inputs/stripeInvoicesView
             name: amt_spent_subscriptions
             select: sum(charges_amount) - sum(case when refund_amount is not null then refund_amount else 0 end)
             where: invoices_id is not null
-
         - entity_var:
             from: inputs/stripeInvoicesView
             name: first_subscription_time
             select: min(charges_created_timestamp)
             where: invoices_id is not null and (canceled_at is null or canceled_at > to_timestamp_tz(replace('{{end_time}}',' UTC')))
-
         - entity_var:
             name: days_since_first_subscription
             select: '{{ macro_datediff(''first_subscription_time'') }}'
-
+            dependencies:
+              - first_subscription_time
         - entity_var:
             from: inputs/stripeInvoicesView
             name: total_active_subscriptions
             select: count( distinct subscriptions_id)
             where: "{{active_plans_filter('charges_amount','canceled_at')}}"
-
         - entity_var:
             from: inputs/stripeInvoicesView
             name: total_active_plans
             select: count( distinct plan_id)
             where: "{{active_plans_filter('charges_amount','canceled_at')}}"
-
         - entity_var:
             from: inputs/stripeInvoicesView
             name: active_plan_intervals
             select: array_agg(plan_interval)
             where: "{{active_plans_filter('charges_amount','canceled_at')}}"
-
         - entity_var:
             from: inputs/stripeInvoicesView
             name: total_active_plan_amount
             select: sum(plan_amount)
             where: "{{active_plans_filter('charges_amount','canceled_at')}}"
-
     model_type: feature_table_model
     name: stripe_features
