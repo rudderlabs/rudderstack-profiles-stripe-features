@@ -9,7 +9,6 @@ inputs:
     source_metadata:
       role: singer-stripe
       category: singer-protocol
-
   - ids:
       - entity: user
         select: customer
@@ -29,7 +28,6 @@ inputs:
     source_metadata:
       role: singer-stripe
       category: singer-protocol
-
   - ids:
       - entity: user
         select: invoices_id
@@ -43,7 +41,6 @@ inputs:
     source_metadata:
       role: singer-stripe
       category: singer-protocol
-
   - ids:
       - entity: user
         select: id
@@ -54,7 +51,6 @@ inputs:
     source_metadata:
       role: singer-stripe
       category: singer-protocol
-
   - ids:
       - entity: user
         select: subscriptions_id
@@ -68,7 +64,6 @@ inputs:
     source_metadata:
       role: singer-stripe
       category: singer-protocol
-
   - ids:
       - entity: user
         select: charge
@@ -82,7 +77,6 @@ inputs:
     source_metadata:
       role: singer-stripe
       category: singer-protocol
-
   - ids:
       - entity: user
         select: customer
