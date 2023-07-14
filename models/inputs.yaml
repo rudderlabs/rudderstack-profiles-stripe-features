@@ -47,7 +47,7 @@ inputs:
         type: balance_transaction_id
     name: stripeBalanceHistory
     occurred_at_col: created
-    table: analytics_db.data_apps_simulated_stripe.balance_history
+    table: analytics_db.data_apps_simulated_stripe.balance_transactions
     source_metadata:
       role: singer-stripe
       category: singer-protocol
