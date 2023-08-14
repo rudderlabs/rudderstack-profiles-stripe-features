@@ -3,9 +3,11 @@ inputs:
       - entity: user
         select: customers_id
         type: customer_id
+        to_default_stitcher: true
     name: stripeCustomers
     occurred_at_col: timestamp
-    table: analytics_db.data_apps_simulated_stripe.customers
+    app_defaults:
+      table: analytics_db.data_apps_simulated_stripe.customers
     source_metadata:
       role: singer-stripe
       category: singer-protocol
@@ -13,18 +15,23 @@ inputs:
       - entity: user
         select: customer
         type: customer_id
+        to_default_stitcher: true
       - entity: user
         select: invoice
         type: invoice_id
+        to_default_stitcher: true
       - entity: user
         select: charges_id
         type: charge_id
+        to_default_stitcher: true
       - entity: user
         select: balance_transaction
         type: balance_transaction_id
+        to_default_stitcher: true
     name: stripeCharges
     occurred_at_col: created
-    table: analytics_db.data_apps_simulated_stripe.charges
+    app_defaults:
+      table: analytics_db.data_apps_simulated_stripe.charges
     source_metadata:
       role: singer-stripe
       category: singer-protocol
@@ -32,12 +39,15 @@ inputs:
       - entity: user
         select: invoices_id
         type: invoice_id
+        to_default_stitcher: true
       - entity: user
         select: customer
         type: customer_id
+        to_default_stitcher: true
     name: stripeInvoices
     occurred_at_col: to_timestamp(created)
-    table: analytics_db.data_apps_simulated_stripe.invoices
+    app_defaults:
+      table: analytics_db.data_apps_simulated_stripe.invoices
     source_metadata:
       role: singer-stripe
       category: singer-protocol
@@ -45,9 +55,11 @@ inputs:
       - entity: user
         select: id
         type: balance_transaction_id
+        to_default_stitcher: true
     name: stripeBalanceHistory
     occurred_at_col: created
-    table: analytics_db.data_apps_simulated_stripe.balance_transactions
+    app_defaults:
+      table: analytics_db.data_apps_simulated_stripe.balance_transactions
     source_metadata:
       role: singer-stripe
       category: singer-protocol
@@ -55,12 +67,15 @@ inputs:
       - entity: user
         select: subscriptions_id
         type: subscription_id
+        to_default_stitcher: true
       - entity: user
         select: customer
         type: customer_id
+        to_default_stitcher: true
     name: stripeSubscriptions
     occurred_at_col: created
-    table: analytics_db.data_apps_simulated_stripe.subscriptions
+    app_defaults:
+      table: analytics_db.data_apps_simulated_stripe.subscriptions
     source_metadata:
       role: singer-stripe
       category: singer-protocol
@@ -68,12 +83,15 @@ inputs:
       - entity: user
         select: charge
         type: charge_id
+        to_default_stitcher: true
       - entity: user
         select: balance_transaction
         type: balance_transaction_id
+        to_default_stitcher: true
     name: stripeRefunds
     occurred_at_col: created
-    table: analytics_db.data_apps_simulated_stripe.refunds
+    app_defaults:
+      table: analytics_db.data_apps_simulated_stripe.refunds
     source_metadata:
       role: singer-stripe
       category: singer-protocol
@@ -81,9 +99,11 @@ inputs:
       - entity: user
         select: customer
         type: customer_id
+        to_default_stitcher: true
     name: stripeInvoicesView
     occurred_at_col: invoice_created_timestamp
-    view: ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA
+    app_defaults:
+      view: ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA
     source_metadata:
       role: singer-stripe
       category: singer-protocol
