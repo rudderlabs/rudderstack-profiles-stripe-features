@@ -1,109 +1,171 @@
 inputs:
-  - ids:
-      - entity: user
-        select: customers_id
-        type: customer_id
-        to_default_stitcher: true
-    name: stripeCustomers
-    occurred_at_col: timestamp
+  - name: stripeCustomers
+    source_metadata:
+      role: singer-stripe
+      category: singer-protocol
+    contract:
+      is_optional: false
+      is_event_stream: true
+      with_entity_ids:
+        - user
+      with_columns:
+        - name: timestamp
+        - name: customers_id
     app_defaults:
       table: analytics_db.data_apps_simulated_stripe.customers
+      occurred_at_col: timestamp
+      ids:
+        - entity: user
+          select: customers_id
+          type: customer_id
+          to_default_stitcher: true
+  - name: stripeCharges
     source_metadata:
       role: singer-stripe
       category: singer-protocol
-  - ids:
-      - entity: user
-        select: customer
-        type: customer_id
-        to_default_stitcher: true
-      - entity: user
-        select: invoice
-        type: invoice_id
-        to_default_stitcher: true
-      - entity: user
-        select: charges_id
-        type: charge_id
-        to_default_stitcher: true
-      - entity: user
-        select: balance_transaction
-        type: balance_transaction_id
-        to_default_stitcher: true
-    name: stripeCharges
-    occurred_at_col: created
+    contract:
+      is_optional: false
+      is_event_stream: true
+      with_entity_ids:
+        - user
+      with_columns:
+        - name: created
+        - name: customer
+        - name: invoice
+        - name: charges_id
+        - name: balance_transaction
     app_defaults:
       table: analytics_db.data_apps_simulated_stripe.charges
+      occurred_at_col: created
+      ids:
+        - entity: user
+          select: customer
+          type: customer_id
+          to_default_stitcher: true
+        - entity: user
+          select: invoice
+          type: invoice_id
+          to_default_stitcher: true
+        - entity: user
+          select: charges_id
+          type: charge_id
+          to_default_stitcher: true
+        - entity: user
+          select: balance_transaction
+          type: balance_transaction_id
+          to_default_stitcher: true
+  - name: stripeInvoices
     source_metadata:
       role: singer-stripe
       category: singer-protocol
-  - ids:
-      - entity: user
-        select: invoices_id
-        type: invoice_id
-        to_default_stitcher: true
-      - entity: user
-        select: customer
-        type: customer_id
-        to_default_stitcher: true
-    name: stripeInvoices
-    occurred_at_col: to_timestamp(created)
+    contract:
+      is_optional: false
+      is_event_stream: true
+      with_entity_ids:
+        - user
+      with_columns:
+        - name: to_timestamp(created)
+        - name: invoices_id
+        - name: customer
     app_defaults:
       table: analytics_db.data_apps_simulated_stripe.invoices
+      occurred_at_col: to_timestamp(created)
+      ids:
+        - entity: user
+          select: invoices_id
+          type: invoice_id
+          to_default_stitcher: true
+        - entity: user
+          select: customer
+          type: customer_id
+          to_default_stitcher: true
+  - name: stripeBalanceHistory
     source_metadata:
       role: singer-stripe
       category: singer-protocol
-  - ids:
-      - entity: user
-        select: id
-        type: balance_transaction_id
-        to_default_stitcher: true
-    name: stripeBalanceHistory
-    occurred_at_col: created
+    contract:
+      is_optional: false
+      is_event_stream: true
+      with_entity_ids:
+        - user
+      with_columns:
+        - name: created
+        - name: id
     app_defaults:
       table: analytics_db.data_apps_simulated_stripe.balance_transactions
+      occurred_at_col: created
+      ids:
+        - entity: user
+          select: id
+          type: balance_transaction_id
+          to_default_stitcher: true
+  - name: stripeSubscriptions
     source_metadata:
       role: singer-stripe
       category: singer-protocol
-  - ids:
-      - entity: user
-        select: subscriptions_id
-        type: subscription_id
-        to_default_stitcher: true
-      - entity: user
-        select: customer
-        type: customer_id
-        to_default_stitcher: true
-    name: stripeSubscriptions
-    occurred_at_col: created
+    contract:
+      is_optional: false
+      is_event_stream: true
+      with_entity_ids:
+        - user
+      with_columns:
+        - name: created
+        - name: subscriptions_id
+        - name: customer
     app_defaults:
       table: analytics_db.data_apps_simulated_stripe.subscriptions
+      occurred_at_col: created
+      ids:
+        - entity: user
+          select: subscriptions_id
+          type: subscription_id
+          to_default_stitcher: true
+        - entity: user
+          select: customer
+          type: customer_id
+          to_default_stitcher: true
+  - name: stripeRefunds
     source_metadata:
       role: singer-stripe
       category: singer-protocol
-  - ids:
-      - entity: user
-        select: charge
-        type: charge_id
-        to_default_stitcher: true
-      - entity: user
-        select: balance_transaction
-        type: balance_transaction_id
-        to_default_stitcher: true
-    name: stripeRefunds
-    occurred_at_col: created
+    contract:
+      is_optional: false
+      is_event_stream: true
+      with_entity_ids:
+        - user
+      with_columns:
+        - name: created
+        - name: charge
+        - name: balance_transaction
     app_defaults:
       table: analytics_db.data_apps_simulated_stripe.refunds
+      occurred_at_col: created
+      ids:
+        - entity: user
+          select: charge
+          type: charge_id
+          to_default_stitcher: true
+        - entity: user
+          select: balance_transaction
+          type: balance_transaction_id
+          to_default_stitcher: true
+  - name: stripeInvoicesView
     source_metadata:
       role: singer-stripe
       category: singer-protocol
-  - ids:
-      - entity: user
-        select: customer
-        type: customer_id
-        to_default_stitcher: true
-    name: stripeInvoicesView
-    occurred_at_col: invoice_created_timestamp
+    contract:
+      is_optional: false
+      is_event_stream: true
+      with_entity_ids:
+        - user
+      with_columns:
+        - name: invoice_created_timestamp
+        - name: customer
     app_defaults:
       view: ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA
-    source_metadata:
-      role: singer-stripe
-      category: singer-protocol
+      occurred_at_col: invoice_created_timestamp
+      ids:
+        - entity: user
+          select: customer
+          type: customer_id
+          to_default_stitcher: true
