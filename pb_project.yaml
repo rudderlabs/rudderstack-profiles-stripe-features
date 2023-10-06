@@ -1,4 +1,4 @@
-connection: rs_snowflake_stripe
+connection: dev_wh
 entities:
   - id_column_name: main_id
     id_stitcher: models/stripe_id_stitcher
@@ -41,4 +41,4 @@ include_untimed: true
 model_folders:
   - models
 name: stripe_features
-schema_version: 42
+schema_version: 44

@@ -1,0 +1,15 @@
+macros:
+  - inputs:
+      - column
+    name: macro_datediff
+    value: "{% if !(end_time|isnil) %} datediff(day, date({{column}}), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) {% else %} datediff(day, date({{column}}), GETDATE()) {% endif %}"
+  - name: macro_datediff_n
+    inputs:
+      - column
+      - number_of_days
+    value: "{% if !(end_time|isnil) %} datediff(day, date({{column}}), date('{{end_time.Format(\"2006-01-02 15:04:05\")}}')) <={{number_of_days}} {% else %} datediff(day, date({{column}}), GETDATE()) <= {{number_of_days}} {% endif %}"
+  - name: active_plans_filter
+    inputs:
+      - charge_amt_col
+      - cancel_date_col
+    value: "{{charge_amt_col}} > 0 and ({{cancel_date_col}} is null or {{cancel_date_col}} > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} GETDATE()) {% endif %})"
