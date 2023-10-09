@@ -121,8 +121,6 @@ models:
         - entity_var:
             name: days_since_last_purchase
             select: "{{ macro_datediff('{{user.Var(\"last_purchase_time\")}}') }}"
-            dependencies:
-              - last_purchase_time
         - entity_var:
             from: inputs/stripeBalanceHistory
             name: total_sales
@@ -261,8 +259,6 @@ models:
         - entity_var:
             name: days_since_first_subscription
             select: '{{ macro_datediff(''{{user.Var(\"first_subscription_time\")}}'') }}'
-            dependencies:
-              - first_subscription_time
         - entity_var:
             from: inputs/stripeInvoicesView
             name: total_active_subscriptions
