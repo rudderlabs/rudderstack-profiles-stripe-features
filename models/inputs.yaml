@@ -12,7 +12,7 @@ inputs:
         - name: timestamp
         - name: customers_id
     app_defaults:
-      table: analytics_db.data_apps_simulated_stripe.customers
+      table: RUDDERSTACK_TEST_DB.data_apps_simulated_stripe.customers
       occurred_at_col: timestamp
       ids:
         - entity: user
@@ -35,7 +35,7 @@ inputs:
         - name: charges_id
         - name: balance_transaction
     app_defaults:
-      table: analytics_db.data_apps_simulated_stripe.charges
+      table: RUDDERSTACK_TEST_DB.data_apps_simulated_stripe.charges
       occurred_at_col: created
       ids:
         - entity: user
@@ -68,7 +68,7 @@ inputs:
         - name: invoices_id
         - name: customer
     app_defaults:
-      table: analytics_db.data_apps_simulated_stripe.invoices
+      table: RUDDERSTACK_TEST_DB.data_apps_simulated_stripe.invoices
       occurred_at_col: to_timestamp(created)
       ids:
         - entity: user
@@ -92,7 +92,7 @@ inputs:
         - name: created
         - name: id
     app_defaults:
-      table: analytics_db.data_apps_simulated_stripe.balance_transactions
+      table: RUDDERSTACK_TEST_DB.data_apps_simulated_stripe.balance_transactions
       occurred_at_col: created
       ids:
         - entity: user
@@ -113,7 +113,7 @@ inputs:
         - name: subscriptions_id
         - name: customer
     app_defaults:
-      table: analytics_db.data_apps_simulated_stripe.subscriptions
+      table: RUDDERSTACK_TEST_DB.data_apps_simulated_stripe.subscriptions
       occurred_at_col: created
       ids:
         - entity: user
@@ -138,7 +138,7 @@ inputs:
         - name: charge
         - name: balance_transaction
     app_defaults:
-      table: analytics_db.data_apps_simulated_stripe.refunds
+      table: RUDDERSTACK_TEST_DB.data_apps_simulated_stripe.refunds
       occurred_at_col: created
       ids:
         - entity: user
@@ -162,7 +162,7 @@ inputs:
         - name: invoice_created_timestamp
         - name: customer
     app_defaults:
-      view: ANALYTICS_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA
+      view: RUDDERSTACK_TEST_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA
       occurred_at_col: invoice_created_timestamp
       ids:
         - entity: user
