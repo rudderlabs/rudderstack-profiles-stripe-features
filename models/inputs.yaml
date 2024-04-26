@@ -11,6 +11,7 @@ inputs:
       with_columns:
         - name: timestamp
         - name: customers_id
+        - name: created
     app_defaults:
       table: RUDDERSTACK_TEST_DB.data_apps_simulated_stripe.customers
       occurred_at_col: timestamp
@@ -33,6 +34,12 @@ inputs:
         - name: invoice
         - name: charges_id
         - name: balance_transaction
+        - name: currency
+        - name: payment_method_details_card_funding
+        - name: status
+        - name: billing_details_address_country
+        - name: billing_details_address_state
+        - name: amount
     app_defaults:
       table: RUDDERSTACK_TEST_DB.data_apps_simulated_stripe.charges
       occurred_at_col: created
@@ -59,7 +66,7 @@ inputs:
       with_entity_ids:
         - user
       with_columns:
-        - name: to_timestamp(created)
+        - name: created
         - name: invoices_id
         - name: customer
     app_defaults:
@@ -84,6 +91,10 @@ inputs:
       with_columns:
         - name: created
         - name: id
+        - name: amount
+        - name: fee
+        - name: net
+        - name: type
     app_defaults:
       table: RUDDERSTACK_TEST_DB.data_apps_simulated_stripe.balance_transactions
       occurred_at_col: created
@@ -149,6 +160,16 @@ inputs:
       with_columns:
         - name: invoice_created_timestamp
         - name: customer
+        - name: plan_interval
+        - name: charges_amount
+        - name: canceled_at
+        - name: refund_amount
+        - name: invoices_id
+        - name: amount_due
+        - name: charges_created_timestamp
+        - name: plan_id
+        - name: subscriptions_id
+        - name: plan_amount
     app_defaults:
       view: RUDDERSTACK_TEST_DB.DATA_APPS_SIMULATED_STRIPE.STG_INVOICES_DATA
       occurred_at_col: invoice_created_timestamp
