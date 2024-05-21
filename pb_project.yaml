@@ -37,8 +37,7 @@ id_types:
       - type: exclude
         value: NaN
     name: subscription_id
-include_untimed: true
 model_folders:
   - models
 name: stripe_features
-schema_version: 61
+schema_version: 63
