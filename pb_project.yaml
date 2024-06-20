@@ -40,4 +40,4 @@ id_types:
 model_folders:
   - models
 name: stripe_features
-schema_version: 63
+schema_version: 67
