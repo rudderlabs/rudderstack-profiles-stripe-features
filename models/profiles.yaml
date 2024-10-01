@@ -9,7 +9,6 @@ models:
         - from: inputs/stripeRefunds
         - from: inputs/stripeInvoicesView
       entity_key: user
-      validity_time: 24h
     model_type: id_stitcher
     name: stripe_id_stitcher
   - model_spec:
@@ -55,7 +54,6 @@ models:
         - total_active_plans
         - active_plan_intervals
         - total_active_plan_amount
-      validity_time: 24h
     model_type: feature_table_model
     name: stripe_features
 var_groups:
