@@ -12,4 +12,13 @@ macros:
     inputs:
       - charge_amt_col
       - cancel_date_col
-    value: " {{charge_amt_col}} > 0 and ({{cancel_date_col}} is null or {{cancel_date_col}} > {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') {% else %} {% if warehouse.DatabaseType() == \"bigquery\" %} CURRENT_DATE() {% else %} GETDATE() {% endif %} {% endif %})"
+    value: "
+      {{charge_amt_col}} > 0 and ({{cancel_date_col}} is null or {{cancel_date_col}} > 
+      {% if !(end_time|isnil) %} date('{{end_time.Format(\"2006-01-02 15:04:05\")}}') 
+      {% else %} 
+        {% if warehouse.DatabaseType() == \"bigquery\" %}
+          CURRENT_DATE()
+        {% else %}
+          GETDATE()
+        {% endif %}
+      {% endif %})"
