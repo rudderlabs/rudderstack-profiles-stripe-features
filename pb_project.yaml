@@ -40,5 +40,5 @@ id_types:
 model_folders:
   - models
 name: stripe_features
-schema_version: 80
+schema_version: 84
 retention_period: 720h0m0s
